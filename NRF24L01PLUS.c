@@ -652,8 +652,8 @@ uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length)
 	return status;
 }
 
-//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа
-uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl)
+//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа, данные в ответе
+uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload)
 {
 	uint8_t status;
 
@@ -694,19 +694,54 @@ uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_d
 		//Пишем в регистр
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_AA, 0x01, &nrf_enaa);
 
-		...
+		//Разрешена ли динамическая длина данных
+		if(en_dpl == NRF_STATE_ON)
+		{
+			//Если разрешён
+			nrf_dynpd |= (NRF_REGISTER_DYNPD_DPL_P0 << pipe);
+		}
+		else
+		{
+			//Если запрещён
+			nrf_dynpd &= ~(NRF_REGISTER_DYNPD_DPL_P0 << pipe);
+		}
 
-		/*
-		uint8_t nrf_dynpd= 0x00;
-		uint8_t nrf_feature = 0x00;
+		//Разрешены ли данные в ответе ACK
+		if(en_ack_payload == NRF_STATE_ON)
+		{
+			//Если разрешён
+			//Тут же включим EN_DYN_ACK
+			//Тут же нужно включить для приёма ACK бит DYN_PD0
+			nrf_feature |= NRF_REGISTER_FEATURE_EN_ACK_PAY;
+			nrf_feature |= NRF_REGISTER_FEATURE_EN_DYN_ACK;
+			nrf_dynpd |= NRF_REGISTER_DYNPD_DPL_P0;
+		}
+		else
+		{
+			//Если запрещён
+			//Тут же выключим EN_DYN_ACK
+			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_ACK_PAY;
+			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_DYN_ACK;
+		}
 
+		//Пишем в регистр
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &nrf_dynpd);
 
+		//Если выставлен хоть один бит NRF_REGISTER_DYNPD, то нужно включить бит EN_DPL регистра NRF_REGISTER_FEATURE
+		//Если ноль, то выключить
+		if(nrf_dynpd != 0x00)
+		{
+			//Включим
+			nrf_feature |= NRF_REGISTER_FEATURE_EN_DPL;
+		}
+		else
+		{
+			//Выключим
+			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_DPL;
+		}
 
-
-
-		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &reg_value);
-
-		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &reg_value);*/
+		//Пишем в регистр
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &nrf_feature);
 	}
 
 	return status;

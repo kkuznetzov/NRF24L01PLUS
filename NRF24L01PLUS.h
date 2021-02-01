@@ -30,7 +30,7 @@ uint8_t NRF_SET_CRC_SIZE(uint8_t size);//Задать размер CRC, 1/2
 uint8_t NRF_SET_POWER(uint8_t power);//Задать мощность передачтчика
 uint8_t NRF_SET_BAUDRATE(uint8_t baudrate);//Задать скорость обмена
 uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length);//Задать размер данных на приём для заданного PIPE, от 0 (не используется) до 32, для режима Static Length
-uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl);//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа
+uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload);//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа, данные в ответе
 
 uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag);//Запуск передачи пакета
 uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout);//Запуск приёма пакета
