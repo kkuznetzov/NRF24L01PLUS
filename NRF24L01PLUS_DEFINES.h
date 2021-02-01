@@ -137,7 +137,7 @@
 
 //Минимальное и максимальное значения номера радиоканала, с шагом 1 МГц начиная с 2400 МГц
 #define NRF_RADIO_CHANNEL_NUMBER_MINIMUM 0x00 //Канал 0
-#define NRF_RADIO_CHANNEL_NUMBER_MAXIMUM 0x7F //Канал 127
+#define NRF_RADIO_CHANNEL_NUMBER_MAXIMUM 0x7D //Канал 125
 #define NRF_RADIO_CHANNEL_DEFAULT        0x02 //Номер канала по умолчанию
 
 //Ширина радиоканала и начальная частота

@@ -28,14 +28,29 @@ uint8_t nrf_transmit_data_size;
 uint8_t nrf_receive_data[NRF_RF_MAXIMUM_DATA_EXCHANGE_SIZE];
 uint8_t nrf_receive_data_size;
 
+//Длина адреса
+uint8_t nrf_size_address = NRF_ADDRESS_LENGTH_5_BYTE_VALUE;
+
+//Мощность и скорость обмена
+uint8_t nrf_power_and_baudrate;
+
+//Флаг отправки данных без подтверждения
+uint8_t nrf_tx_no_ack_flag = NRF_STATE_OFF;
+
+//Для хранения настроек PIPE: разрешение PIPE, разрешение ответа ACK, разрешение динамической длины данных
+uint8_t nrf_enaa = 0x00;
+uint8_t nrf_rxaddr = 0x00;
+uint8_t nrf_dynpd= 0x00;
+uint8_t nrf_feature = 0x00;
+
 //Инициализация NRF24L01PLUS
-uint8_t NRF_INIT(uint8_t *tx_address, uint8_t *rx_address, uint8_t size_address)
+uint8_t NRF_INIT(uint8_t size_address)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t reg_value;
 
 	//Проверка аргументов
-	if((tx_address == NULL) || (rx_address == NULL) || (size_address != NRF_ADDRESS_LENGTH_5_BYTE_VALUE))
+	if((size_address != NRF_ADDRESS_LENGTH_3_BYTE_VALUE) && (size_address != NRF_ADDRESS_LENGTH_4_BYTE_VALUE) && (size_address != NRF_ADDRESS_LENGTH_5_BYTE_VALUE))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
@@ -45,18 +60,26 @@ uint8_t NRF_INIT(uint8_t *tx_address, uint8_t *rx_address, uint8_t size_address)
 		reg_value = NRF_REGISTER_CONFIG_EN_CRC;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
 
-		//Настройки PIPE для автоподтверждения
-		//Используем два PIPE
-		reg_value = NRF_REGISTER_EN_AA_ENAA_P0 | NRF_REGISTER_EN_AA_ENAA_P1;
+		//Пока запретим все PIPE
+		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_AA, 0x01, &reg_value);
 
-		//Разрешим PIPE на приём, 0 - й приём автоподтверждения, 1 - приём
-		reg_value = NRF_REGISTER_EN_RXADDR_ERX_0 | NRF_REGISTER_EN_RXADDR_ERX_1;
+		//Запомним
+		nrf_enaa = reg_value;
+
+		//Пока запретим все PIPE
+		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_RXADDR, 0x01, &reg_value);
 
-		//Настроим длину адреса, 5 байт
-		reg_value = NRF_REGISTER_SETUP_AW_5_BYTES;
+		//Запомним
+		nrf_rxaddr = reg_value;
+
+		//Настроим длину адреса
+		reg_value = size_address;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_SETUP_AW, 0x01, &reg_value);
+
+		//Запомним длину адреса
+		nrf_size_address = size_address;
 
 		//Настроим параметры повтора отправки сообщения, 2000 мкс, 3 отправки
 		reg_value = (0x07 << NRF_ARD_BIT_LEFT_SHIFT) | 0x03;
@@ -71,6 +94,9 @@ uint8_t NRF_INIT(uint8_t *tx_address, uint8_t *rx_address, uint8_t size_address)
 		reg_value = NRF_REGISTER_RF_SETUP_RF_DR_LOW | (NRF_RF_PWR_0DBM << NRF_RF_PWR_BIT_LEFT_SHIFT);
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_SETUP, 0x01, &reg_value);
 
+		//Запомним скорость и мощность
+		nrf_power_and_baudrate = reg_value;
+
 		//Сброс флагов прерываний
 		reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_STATUS, 0x01, &reg_value);
@@ -81,19 +107,19 @@ uint8_t NRF_INIT(uint8_t *tx_address, uint8_t *rx_address, uint8_t size_address)
 		//Отчистка FIFO передатчика
 		status = NRF_FLUSH_TX();
 
-		//Адрес на передачу и приём ACK в PIPE 0
-		status = NRF_WRITE_TX_ADDRESS(tx_address, NRF_ADDRESS_LENGTH_5_BYTE_VALUE);
-
-		//Адрес на приём в PIPE 1
-		status = NRF_WRITE_RX_ADDRESS(rx_address, NRF_ADDRESS_LENGTH_5_BYTE_VALUE);
-
-		//Разрешим динамическую длину пакетов и подтверждения для PIPE 0 и PIPE 1
-		reg_value = NRF_REGISTER_DYNPD_DPL_P0 | NRF_REGISTER_DYNPD_DPL_P1;
+		//Пока запретим динамическую длину пакетов и подтверждения для всеx PIPE
+		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &reg_value);
 
-		//Разрешим подтверждение, динамическую длину данных и подтверждения
-		reg_value = NRF_REGISTER_FEATURE_EN_DPL | NRF_REGISTER_FEATURE_EN_ACK_PAY | NRF_REGISTER_FEATURE_EN_DYN_ACK;
+		//Запомним
+		nrf_dynpd = reg_value;
+
+		//Пока запретим подтверждение, динамическую длину данных и подтверждения
+		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &reg_value);
+
+		//Запомним
+		nrf_feature = reg_value;
 
 		//Сброс регистра статусов
 		reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
@@ -438,11 +464,28 @@ uint8_t NRF_NOP(void)
 }
 
 //Запись адреса на приём
-uint8_t NRF_WRITE_RX_ADDRESS(uint8_t *addr, uint8_t size)
+uint8_t NRF_WRITE_RX_ADDRESS(uint8_t pipe, uint8_t *addr, uint8_t size)
 {
 	uint8_t status;
+	uint8_t reg_address;
 
-	status = NRF_WRITE_REGISTER(NRF_REGISTER_RX_ADDR_P1, size, addr);
+	//Проверка аргументов
+	if((pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (size != nrf_size_address))
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		//Зададим адрес регистра для адреса приёма в зависимости от номера PIPE
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_0) reg_address = NRF_REGISTER_RX_ADDR_P0;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_1) reg_address = NRF_REGISTER_RX_ADDR_P1;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_2) reg_address = NRF_REGISTER_RX_ADDR_P2;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_3) reg_address = NRF_REGISTER_RX_ADDR_P3;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_4) reg_address = NRF_REGISTER_RX_ADDR_P4;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_5) reg_address = NRF_REGISTER_RX_ADDR_P5;
+
+		status = NRF_WRITE_REGISTER(reg_address, size, addr);
+	}
 
 	return status;
 }
@@ -452,14 +495,225 @@ uint8_t NRF_WRITE_TX_ADDRESS(uint8_t *addr, uint8_t size)
 {
 	uint8_t status;
 
-	status = NRF_WRITE_REGISTER(NRF_REGISTER_TX_ADDR, size, addr);
-	status = NRF_WRITE_REGISTER(NRF_REGISTER_RX_ADDR_P0, size, addr);
+	//Проверка аргументов
+	if(size != nrf_size_address)
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_TX_ADDR, size, addr);
+	}
+
+	return status;
+}
+
+//Задание радиоканала, 0 - 125
+uint8_t NRF_SET_CHANNEL(uint8_t channel)
+{
+	uint8_t status;
+
+	//Проверка аргументов
+	if(channel > NRF_RADIO_CHANNEL_NUMBER_MAXIMUM)
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_CH, 0x01, &channel);
+	}
+
+	return status;
+}
+
+//Задание параметров повторной передачи пакетов
+uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc)
+{
+	uint8_t status;
+	uint8_t reg_value;
+
+	//Проверка аргументов
+	if((ard > NRF_ARD_MAXIMUM) || (arc > NRF_ARC_MAXIMUM))
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		reg_value = (ard << NRF_ARD_BIT_LEFT_SHIFT) | arc;
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_SETUP_RETR, 0x01, &reg_value);
+	}
+
+	return status;
+}
+
+//Задать размер CRC, 1/2
+uint8_t NRF_SET_CRC_SIZE(uint8_t size)
+{
+	uint8_t status;
+	uint8_t reg_value;
+
+	//Проверка аргументов
+	if((size != NRF_CRC_LENGTH_1_BYTE) && (size != NRF_CRC_LENGTH_2_BYTE))
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		reg_value = NRF_REGISTER_CONFIG_EN_CRC;
+		if(size == NRF_CRC_LENGTH_2_BYTE) reg_value |= NRF_REGISTER_CONFIG_CRCO;
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+	}
+
+	return status;
+}
+
+//Задать мощность передачтчика
+uint8_t NRF_SET_POWER(uint8_t power)
+{
+	uint8_t status;
+
+	//Проверка аргументов
+	if(power > NRF_RF_PWR_0DBM)
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		//Сброс бит задания мощность
+		nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_PWR_MASK;
+
+		//Зааём новое значение мощности
+		nrf_power_and_baudrate = (power << NRF_RF_PWR_BIT_LEFT_SHIFT);
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_SETUP, 0x01, &nrf_power_and_baudrate);
+	}
+
+	return status;
+}
+
+//Задать скорость обмена
+uint8_t NRF_SET_BAUDRATE(uint8_t baudrate)
+{
+	uint8_t status;
+
+	//Проверка аргументов
+	if(baudrate > NRF_DATA_RATE_2M)
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		//Новое значение скорости
+		if(baudrate == NRF_DATA_RATE_250K)
+		{
+			nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_DR_HIGH;
+			nrf_power_and_baudrate |= NRF_REGISTER_RF_SETUP_RF_DR_LOW;
+		}
+		if(baudrate == NRF_DATA_RATE_1M)
+		{
+			nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_DR_HIGH;
+			nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_DR_LOW;
+		}
+		if(baudrate == NRF_DATA_RATE_2M)
+		{
+			nrf_power_and_baudrate |= NRF_REGISTER_RF_SETUP_RF_DR_HIGH;
+			nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_DR_LOW;
+		}
+
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_SETUP, 0x01, &nrf_power_and_baudrate);
+	}
+
+	return status;
+}
+
+//Задать размер данных на приём для заданного PIPE, от 0 (не используется) до 32, для режима Static Length
+uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length)
+{
+	uint8_t status;
+	uint8_t reg_address;
+
+	//Проверка аргументов
+	if((pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (length > NRF_RF_MAXIMUM_DATA_EXCHANGE_SIZE))
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		//Зададим адрес регистра длины принимаемых данных в зависимости от номера PIPE
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_0) reg_address = NRF_REGISTER_RX_PW_P0;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_1) reg_address = NRF_REGISTER_RX_PW_P1;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_2) reg_address = NRF_REGISTER_RX_PW_P2;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_3) reg_address = NRF_REGISTER_RX_PW_P3;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_4) reg_address = NRF_REGISTER_RX_PW_P4;
+		if(pipe == NRF_RX_DATA_PIPE_NUMBER_5) reg_address = NRF_REGISTER_RX_PW_P5;
+
+		status = NRF_WRITE_REGISTER(reg_address, 0x01, &length);
+	}
+
+	return status;
+}
+
+//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа
+uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl)
+{
+	uint8_t status;
+
+	//Проверка аргументов
+	if(pipe > NRF_RX_DATA_PIPE_NUMBER_5)
+	{
+		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
+	}
+	else
+	{
+		//Разрешён PIPE
+		if(en_pipe == NRF_STATE_ON)
+		{
+			//Если разрешён
+			nrf_rxaddr |= (NRF_REGISTER_EN_RXADDR_ERX_0 << pipe);
+		}
+		else
+		{
+			//Если запрещён
+			nrf_rxaddr &= ~(NRF_REGISTER_EN_RXADDR_ERX_0 << pipe);
+		}
+
+		//Пишем в регистр
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_RXADDR, 0x01, &nrf_rxaddr);
+
+		//Разрешён ли ACK для PIPE
+		if(en_ack == NRF_STATE_ON)
+		{
+			//Если разрешён
+			nrf_enaa |= (NRF_REGISTER_EN_AA_ENAA_P0 << pipe);
+		}
+		else
+		{
+			//Если запрещён
+			nrf_enaa &= ~(NRF_REGISTER_EN_AA_ENAA_P0 << pipe);
+		}
+
+		//Пишем в регистр
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_AA, 0x01, &nrf_enaa);
+
+		...
+
+		/*
+		uint8_t nrf_dynpd= 0x00;
+		uint8_t nrf_feature = 0x00;
+
+
+
+
+
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &reg_value);
+
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &reg_value);*/
+	}
 
 	return status;
 }
 
 //Запуск передачи пакета
-uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout)
+uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t reg_value;
@@ -502,6 +756,16 @@ uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout)
 				nrf_transmit_data[i] = data[i];
 			}
 			nrf_transmit_data_size = size;
+
+			//Флаг передачи без подтверждения
+			if(no_ack_flag == NRF_STATE_ON)
+			{
+				nrf_tx_no_ack_flag = NRF_STATE_ON;
+			}
+			else
+			{
+				nrf_tx_no_ack_flag = NRF_STATE_OFF;
+			}
 		}
 	}
 
@@ -609,8 +873,16 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 			nrf_machine_state = NRF_MACHINE_STATE_WAIT_SEND;
 
 			//Загружаем данные в FIFO на передачу
-			NRF_WRITE_TX_PAYLOAD(nrf_transmit_data_size, nrf_transmit_data);
-			//NRF_WRITE_TX_PAYLOAD_NO_ACK(nrf_transmit_data_size, nrf_transmit_data);
+			if(nrf_tx_no_ack_flag == NRF_STATE_ON)
+			{
+				//Если без подтверждения
+				NRF_WRITE_TX_PAYLOAD_NO_ACK(nrf_transmit_data_size, nrf_transmit_data);
+			}
+			else
+			{
+				//Если с подтверждением
+				NRF_WRITE_TX_PAYLOAD(nrf_transmit_data_size, nrf_transmit_data);
+			}
 
 			//Сброс размера данных
 			nrf_transmit_data_size = 0x00;
