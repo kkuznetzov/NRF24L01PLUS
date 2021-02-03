@@ -43,6 +43,9 @@ uint8_t nrf_rxaddr = 0x00;
 uint8_t nrf_dynpd= 0x00;
 uint8_t nrf_feature = 0x00;
 
+//Регистр конфигурации
+uint8_t nrf_config = 0x00;
+
 //Инициализация NRF24L01PLUS
 uint8_t NRF_INIT(uint8_t size_address)
 {
@@ -59,6 +62,9 @@ uint8_t NRF_INIT(uint8_t size_address)
 		//Настройки CRC и прерываний. Размер CRC 1 байт, CRC разрешён, прерывания разрешены
 		reg_value = NRF_REGISTER_CONFIG_EN_CRC;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+
+		//Запомним
+		nrf_config = reg_value;
 
 		//Пока запретим все PIPE
 		reg_value = 0x00;
@@ -559,9 +565,13 @@ uint8_t NRF_SET_CRC_SIZE(uint8_t size)
 	}
 	else
 	{
-		reg_value = NRF_REGISTER_CONFIG_EN_CRC;
-		if(size == NRF_CRC_LENGTH_2_BYTE) reg_value |= NRF_REGISTER_CONFIG_CRCO;
-		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+		//Сбросим бит
+		nrf_config &= ~NRF_REGISTER_CONFIG_CRCO;
+
+		//Выставим биты
+		nrf_config |= NRF_REGISTER_CONFIG_EN_CRC;
+		if(size == NRF_CRC_LENGTH_2_BYTE) nrf_config |= NRF_REGISTER_CONFIG_CRCO;
+		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 	}
 
 	return status;
@@ -779,8 +789,8 @@ uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_TIMEOUT, timeout);
 
 			//Включаем приёмопередатчик, PWR_UP = 1
-			reg_value = NRF_REGISTER_CONFIG_EN_CRC | NRF_REGISTER_CONFIG_PWR_UP;
-			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP;
+			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
 			//Запуск таймаута для паузы на время включения
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_DELAY, NRF_TIME_POWER_UP);
@@ -839,8 +849,8 @@ uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout)
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_TIMEOUT, timeout);
 
 			//Включаем приёмопередатчик, PWR_UP = 1
-			reg_value = NRF_REGISTER_CONFIG_EN_CRC | NRF_REGISTER_CONFIG_PWR_UP;
-			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP;
+			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
 			//Запуск таймаута для паузы на время включения
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_DELAY, NRF_TIME_POWER_UP);
@@ -861,13 +871,13 @@ uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout)
 }
 
 //Получить принятые данные
-uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t *size)
+uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_size)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
 	//Проверка аргументов
-	if((data == NULL) || (size == NULL))
+	if((data == NULL) || (data_size == NULL) || (buffer_size < nrf_receive_data_size))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
@@ -878,7 +888,7 @@ uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t *size)
 		{
 			data[i] = nrf_receive_data[i];
 		}
-		*size = nrf_receive_data_size;
+		*data_size = nrf_receive_data_size;
 
 		//Сброс размера данных
 		nrf_receive_data_size = 0x00;
@@ -1019,8 +1029,8 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 			NRF_WRITE_ACK_PAYLOAD(NRF_RX_DATA_PIPE_NUMBER_1, nrf_transmit_data_size, nrf_transmit_data);
 
 			//Выставим бит PRIM_RX в 1
-			reg_value = NRF_REGISTER_CONFIG_EN_CRC | NRF_REGISTER_CONFIG_PWR_UP | NRF_REGISTER_CONFIG_PRIM_RX;
-			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP | NRF_REGISTER_CONFIG_PRIM_RX;
+			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
 			//Пауза
 			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_RECEIVE);
@@ -1109,8 +1119,9 @@ uint8_t NRF_STOP_PROCESSING(void)
 	status = NRF_FLUSH_RX();
 
 	//Выключим приёмопередатчик, PWR_UP = 0, PRIM_RX = 0
-	reg_value = NRF_REGISTER_CONFIG_EN_CRC;
-	status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
+	nrf_config &= ~NRF_REGISTER_CONFIG_PWR_UP;
+	nrf_config &= ~NRF_REGISTER_CONFIG_PRIM_RX;
+	status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
 	//Сброс автомата состояний
 	nrf_machine_state = NRF_MACHINE_STATE_FREE;

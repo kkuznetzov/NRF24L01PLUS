@@ -49,14 +49,14 @@ uint8_t NRF_HAL_SPI_EXCHANGE(uint8_t *data_out, uint8_t *data_in, uint16_t size_
 		HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_RESET);
 
 		//Пауза
-		pause = 0x05;
+		pause = 0x0A;
 		while(pause--);
 
 		//Обмен данными черезSPI
 		HAL_SPI_EXCHANGE(data_out, data_in, size_data);
 
 		//Пауза
-		pause = 0x05;
+		pause = 0x0A;
 		while(pause--);
 
 		//Линию CSN в высокий уровень
