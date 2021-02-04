@@ -108,9 +108,9 @@
 #define NRF_CRC_LENGTH_2_BYTE       0x01 //Длина CRC 2 байта
 
 //Длина адреса на передачу и приём, для записи в регистр
-#define NRF_ADDRESS_LENGTH_3_BYTE   0x00 //Длина адреса 3 байта
-#define NRF_ADDRESS_LENGTH_4_BYTE   0x01 //Длина адреса 4 байта
-#define NRF_ADDRESS_LENGTH_5_BYTE   0x02 //Длина адреса 5 байта
+#define NRF_ADDRESS_LENGTH_3_BYTE   0x01 //Длина адреса 3 байта
+#define NRF_ADDRESS_LENGTH_4_BYTE   0x02 //Длина адреса 4 байта
+#define NRF_ADDRESS_LENGTH_5_BYTE   0x03 //Длина адреса 5 байта
 
 //Длина адреса на передачу и приём, значение
 #define NRF_ADDRESS_LENGTH_3_BYTE_VALUE  0x03 //Длина адреса 3 байта

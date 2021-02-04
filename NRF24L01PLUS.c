@@ -81,7 +81,9 @@ uint8_t NRF_INIT(uint8_t size_address)
 		nrf_rxaddr = reg_value;
 
 		//Настроим длину адреса
-		reg_value = size_address;
+		if(size_address == NRF_ADDRESS_LENGTH_3_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_3_BYTE;
+		if(size_address == NRF_ADDRESS_LENGTH_4_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_4_BYTE;
+		if(size_address == NRF_ADDRESS_LENGTH_5_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_5_BYTE;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_SETUP_AW, 0x01, &reg_value);
 
 		//Запомним длину адреса
