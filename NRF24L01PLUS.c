@@ -46,6 +46,9 @@ uint8_t nrf_feature = 0x00;
 //Регистр конфигурации
 uint8_t nrf_config = 0x00;
 
+//Номер PIPE для записи ACK
+uint8_t nrf_ack_pipe_number = NRF_RX_DATA_PIPE_NUMBER_0;
+
 //Инициализация NRF24L01PLUS
 uint8_t NRF_INIT(uint8_t size_address)
 {
@@ -818,13 +821,13 @@ uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_
 }
 
 //Запуск приёма пакета
-uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout)
+uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_t timeout)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
 	//Проверка аргументов
-	if(timeout == 0x00)
+	if((timeout == 0x00) || (ack_pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (data == NULL) || (size == 0x00) || (timeout == 0x00))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
@@ -863,6 +866,9 @@ uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout)
 
 			//Сброс размера данных
 			nrf_receive_data_size = 0x00;
+
+			//Запомним PIPE
+			nrf_ack_pipe_number = ack_pipe;
 		}
 	}
 
@@ -978,7 +984,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				NRF_READ_RX_PAYLOAD(nrf_receive_data_size, nrf_receive_data);
 
 				//Остановка приёма или передачи данных
-				status = NRF_STOP_PROCESSING();
+				NRF_STOP_PROCESSING();
 
 				//Выставим статус завершения передачи
 				status = NRF_ERROR_CODE_SEND_DATA_SUCCESS;
@@ -990,7 +996,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				//Ошибка превышения максимального числа попыток отправки данных
 
 				//Остановка передачи данных
-				status = NRF_STOP_PROCESSING();
+				NRF_STOP_PROCESSING();
 
 				//Выставим статус ошибки
 				status = NRF_ERROR_CODE_SEND_MAX_RT_ERROR;
@@ -1004,7 +1010,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				//Таймаут истёк
 
 				//Остановка передачи данных
-				status = NRF_STOP_PROCESSING();
+				NRF_STOP_PROCESSING();
 
 				//Выставим статус таймаута
 				status = NRF_ERROR_CODE_TIMEOUT;
@@ -1024,7 +1030,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 			nrf_machine_state = NRF_MACHINE_STATE_WAIT_RECEIVE;
 
 			//Загружаем данные в FIFO на передачу ACK, PIPE 1 для приёма данных
-			NRF_WRITE_ACK_PAYLOAD(NRF_RX_DATA_PIPE_NUMBER_1, nrf_transmit_data_size, nrf_transmit_data);
+			NRF_WRITE_ACK_PAYLOAD(nrf_ack_pipe_number, nrf_transmit_data_size, nrf_transmit_data);
 
 			//Выставим бит PRIM_RX в 1
 			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP | NRF_REGISTER_CONFIG_PRIM_RX;
@@ -1073,8 +1079,11 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				//Вычитываем данные
 				NRF_READ_RX_PAYLOAD(nrf_receive_data_size, nrf_receive_data);
 
+				//Пауза перед сбросом RX FIFO, что бы отправился ACK, см. команду FLUSH RX в документации
+				NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_ACK_TRANSMIT);
+
 				//Остановка приёма данных
-				status = NRF_STOP_PROCESSING();
+				NRF_STOP_PROCESSING();
 
 				//Выставим статус завершения приёма
 				status = NRF_ERROR_CODE_RECEIVE_DATA_SUCCESS;
@@ -1088,7 +1097,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				//Таймаут истёк
 
 				//Остановка приёма или передачи данных
-				status = NRF_STOP_PROCESSING();
+				NRF_STOP_PROCESSING();
 
 				//Выставим статус таймаута
 				status = NRF_ERROR_CODE_TIMEOUT;
