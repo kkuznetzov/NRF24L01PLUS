@@ -558,7 +558,6 @@ uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc)
 uint8_t NRF_SET_CRC_SIZE(uint8_t size)
 {
 	uint8_t status;
-	uint8_t reg_value;
 
 	//Проверка аргументов
 	if((size != NRF_CRC_LENGTH_1_BYTE) && (size != NRF_CRC_LENGTH_2_BYTE))
@@ -763,7 +762,6 @@ uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_d
 uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
-	uint8_t reg_value;
 	uint8_t i;
 
 	//Проверка аргументов
@@ -823,7 +821,6 @@ uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_
 uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
-	uint8_t reg_value;
 	uint8_t i;
 
 	//Проверка аргументов
@@ -903,7 +900,6 @@ uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_
 uint8_t NRF_EXCHANGE_PROCESSING(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
-	uint8_t reg_value;
 	uint8_t irq_state = NRF_STATE_OFF;
 
 	//Поведение зависит от состояния автомата
@@ -993,7 +989,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 			{
 				//Ошибка превышения максимального числа попыток отправки данных
 
-				//Остановка приёма или передачи данных
+				//Остановка передачи данных
 				status = NRF_STOP_PROCESSING();
 
 				//Выставим статус ошибки
@@ -1007,7 +1003,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 			{
 				//Таймаут истёк
 
-				//Остановка приёма или передачи данных
+				//Остановка передачи данных
 				status = NRF_STOP_PROCESSING();
 
 				//Выставим статус таймаута
@@ -1039,6 +1035,9 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 
 			//Выставляем сигнал CE в 1
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_ON);
+
+			//Пауза
+			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_RECEIVE);
 
 		    //Остановим таймер
 			NRF_HAL_STOP_TIMEOUT(NRF_TIMER_DELAY);
@@ -1074,7 +1073,7 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 				//Вычитываем данные
 				NRF_READ_RX_PAYLOAD(nrf_receive_data_size, nrf_receive_data);
 
-				//Остановка приёма или передачи данных
+				//Остановка приёма данных
 				status = NRF_STOP_PROCESSING();
 
 				//Выставим статус завершения приёма
@@ -1100,33 +1099,45 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 	return status;
 }
 
-//Остановка приёма или передачи данных
+//Остановка передачи или приёма данных
 uint8_t NRF_STOP_PROCESSING(void)
 {
+	//Выключаем всё
+
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t reg_value;
-
-	//Остановим таймер
-	NRF_HAL_STOP_TIMEOUT(NRF_TIMER_TIMEOUT);
+	uint8_t irq_state = NRF_STATE_OFF;
 
 	//Выставляем сигнал CE в 0
 	NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_OFF);
+
+	//Пауза
+	NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_STOP_PAUSE);
+
+	//Остановим таймер
+	NRF_HAL_STOP_TIMEOUT(NRF_TIMER_TIMEOUT);
 
 	//Сброс регистра статусов
 	reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
 	status = NRF_WRITE_REGISTER(NRF_REGISTER_STATUS, 0x01, &reg_value);
 
-	//Сброс FIFO на передачу и приём
-	status = NRF_FLUSH_TX();
-	status = NRF_FLUSH_RX();
+	//Запрос состояния прерывания - для сброса
+	NRF_HAL_GET_IRQ_STATE(&irq_state);
 
 	//Выключим приёмопередатчик, PWR_UP = 0, PRIM_RX = 0
 	nrf_config &= ~NRF_REGISTER_CONFIG_PWR_UP;
 	nrf_config &= ~NRF_REGISTER_CONFIG_PRIM_RX;
 	status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
+	//Сброс FIFO на передачу и приём
+	status = NRF_FLUSH_TX();
+	status = NRF_FLUSH_RX();
+
 	//Сброс автомата состояний
 	nrf_machine_state = NRF_MACHINE_STATE_FREE;
+
+	//Пауза
+	NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_STOP_PAUSE);
 
 	return status;
 }

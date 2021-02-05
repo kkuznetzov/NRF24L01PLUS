@@ -252,6 +252,8 @@
 #define NRF_TIME_POWER_UP          0x03 //3 мс с запасом, идеально 1.5 мс
 #define NRF_TIME_CE_START_TRANSMIT 0x0E //15 мкс с запасом, достаточно 10 мкс
 #define NRF_TIME_CE_START_RECEIVE  0x0E //Пауза перед приёмом
+#define NRF_TIME_CE_STOP_PAUSE     0x0E //Пауза перед операциями после сброса линии CE
+#define NRF_TIME_ACK_TRANSMIT      1320 //Пауза на отправку ACK длиной 32 байта, CRC 2 байта, 5адрес 5 байт
 
 //Состояния автомата реализующего обмен через радиоканал
 #define NRF_MACHINE_STATE_FREE          0x00 //Автомат состояний свободен

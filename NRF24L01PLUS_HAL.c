@@ -151,9 +151,10 @@ uint8_t NRF_HAL_GET_IRQ_STATE(uint8_t *state)
 	if(state != NULL)
 	{
 		//Выдадим состояние прерывания
-		if(HAL_GET_NRF_IRQ_STATUS() != 0x00)
+		if(HAL_GET_NRF_IRQ_STATUS() != COUNTER_STATE_OFF)
 		{
 			*state = NRF_STATE_ON;
+			HAL_RST_NRF_IRQ_STATUS();//Сброс статуса прерывания
 		}
 		else
 		{

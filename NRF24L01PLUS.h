@@ -33,10 +33,10 @@ uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length);//Задать размер 
 uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload);//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа, данные в ответе
 
 uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag);//Запуск передачи пакета
-uint8_t NRF_START_RECEIVE(uint8_t *data, uint8_t size, uint32_t timeout);//Запуск приёма пакета
+uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_t timeout);//Запуск приёма пакета
 uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_size);//Получить принятые данные
 uint8_t NRF_EXCHANGE_PROCESSING(void);//Обработка приёма и передачи
-uint8_t NRF_STOP_PROCESSING(void);//Остановка приёма или передачи данных
+uint8_t NRF_STOP_PROCESSING(void);//Остановка передачи или приёма данных
 
 //-таймаут на передачу и на прём?
 #endif /* NRF24L01PLUS_H_ */
