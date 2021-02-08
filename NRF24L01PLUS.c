@@ -1,7 +1,7 @@
 /*
  * NRF24L01PLUS.c
  *
- *  Created on: 23 янв. 2021 г.
+ *  Created on: 23 СЏРЅРІ. 2021 Рі.
  *      Author: K.Kuznetzov
  */
 
@@ -12,134 +12,134 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-//Регистр статуса
+//Р РµРіРёСЃС‚СЂ СЃС‚Р°С‚СѓСЃР°
 uint8_t nrf_status_register = 0x00;
 
-//Данные для записи и чтения
-uint8_t nrf_data_out[NRF_SPI_MAXIMUM_DATA_EXCHANGE_SIZE];//Для записи
-uint8_t nrf_data_in[NRF_SPI_MAXIMUM_DATA_EXCHANGE_SIZE];//Для чтения
+//Р”Р°РЅРЅС‹Рµ РґР»СЏ Р·Р°РїРёСЃРё Рё С‡С‚РµРЅРёСЏ
+uint8_t nrf_data_out[NRF_SPI_MAXIMUM_DATA_EXCHANGE_SIZE];//Р”Р»СЏ Р·Р°РїРёСЃРё
+uint8_t nrf_data_in[NRF_SPI_MAXIMUM_DATA_EXCHANGE_SIZE];//Р”Р»СЏ С‡С‚РµРЅРёСЏ
 
-//Состояние автомата обмена через радиоканал
+//РЎРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕРјР°С‚Р° РѕР±РјРµРЅР° С‡РµСЂРµР· СЂР°РґРёРѕРєР°РЅР°Р»
 uint8_t nrf_machine_state = NRF_MACHINE_STATE_FREE;
 
-//Для хранения данных для отправки и приёма
+//Р”Р»СЏ С…СЂР°РЅРµРЅРёСЏ РґР°РЅРЅС‹С… РґР»СЏ РѕС‚РїСЂР°РІРєРё Рё РїСЂРёС‘РјР°
 uint8_t nrf_transmit_data[NRF_RF_MAXIMUM_DATA_EXCHANGE_SIZE];
 uint8_t nrf_transmit_data_size;
 uint8_t nrf_receive_data[NRF_RF_MAXIMUM_DATA_EXCHANGE_SIZE];
 uint8_t nrf_receive_data_size;
 
-//Длина адреса
+//Р”Р»РёРЅР° Р°РґСЂРµСЃР°
 uint8_t nrf_size_address = NRF_ADDRESS_LENGTH_5_BYTE_VALUE;
 
-//Мощность и скорость обмена
+//РњРѕС‰РЅРѕСЃС‚СЊ Рё СЃРєРѕСЂРѕСЃС‚СЊ РѕР±РјРµРЅР°
 uint8_t nrf_power_and_baudrate;
 
-//Флаг отправки данных без подтверждения
+//Р¤Р»Р°Рі РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С… Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 uint8_t nrf_tx_no_ack_flag = NRF_STATE_OFF;
 
-//Для хранения настроек PIPE: разрешение PIPE, разрешение ответа ACK, разрешение динамической длины данных
+//Р”Р»СЏ С…СЂР°РЅРµРЅРёСЏ РЅР°СЃС‚СЂРѕРµРє PIPE: СЂР°Р·СЂРµС€РµРЅРёРµ PIPE, СЂР°Р·СЂРµС€РµРЅРёРµ РѕС‚РІРµС‚Р° ACK, СЂР°Р·СЂРµС€РµРЅРёРµ РґРёРЅР°РјРёС‡РµСЃРєРѕР№ РґР»РёРЅС‹ РґР°РЅРЅС‹С…
 uint8_t nrf_enaa = 0x00;
 uint8_t nrf_rxaddr = 0x00;
 uint8_t nrf_dynpd= 0x00;
 uint8_t nrf_feature = 0x00;
 
-//Регистр конфигурации
+//Р РµРіРёСЃС‚СЂ РєРѕРЅС„РёРіСѓСЂР°С†РёРё
 uint8_t nrf_config = 0x00;
 
-//Номер PIPE для записи ACK
+//РќРѕРјРµСЂ PIPE РґР»СЏ Р·Р°РїРёСЃРё ACK
 uint8_t nrf_ack_pipe_number = NRF_RX_DATA_PIPE_NUMBER_0;
 
-//Инициализация NRF24L01PLUS
+//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ NRF24L01PLUS
 uint8_t NRF_INIT(uint8_t size_address)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t reg_value;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((size_address != NRF_ADDRESS_LENGTH_3_BYTE_VALUE) && (size_address != NRF_ADDRESS_LENGTH_4_BYTE_VALUE) && (size_address != NRF_ADDRESS_LENGTH_5_BYTE_VALUE))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Настройки CRC и прерываний. Размер CRC 1 байт, CRC разрешён, прерывания разрешены
+		//РќР°СЃС‚СЂРѕР№РєРё CRC Рё РїСЂРµСЂС‹РІР°РЅРёР№. Р Р°Р·РјРµСЂ CRC 1 Р±Р°Р№С‚, CRC СЂР°Р·СЂРµС€С‘РЅ, РїСЂРµСЂС‹РІР°РЅРёСЏ СЂР°Р·СЂРµС€РµРЅС‹
 		reg_value = NRF_REGISTER_CONFIG_EN_CRC;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &reg_value);
 
-		//Запомним
+		//Р—Р°РїРѕРјРЅРёРј
 		nrf_config = reg_value;
 
-		//Пока запретим все PIPE
+		//РџРѕРєР° Р·Р°РїСЂРµС‚РёРј РІСЃРµ PIPE
 		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_AA, 0x01, &reg_value);
 
-		//Запомним
+		//Р—Р°РїРѕРјРЅРёРј
 		nrf_enaa = reg_value;
 
-		//Пока запретим все PIPE
+		//РџРѕРєР° Р·Р°РїСЂРµС‚РёРј РІСЃРµ PIPE
 		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_RXADDR, 0x01, &reg_value);
 
-		//Запомним
+		//Р—Р°РїРѕРјРЅРёРј
 		nrf_rxaddr = reg_value;
 
-		//Настроим длину адреса
+		//РќР°СЃС‚СЂРѕРёРј РґР»РёРЅСѓ Р°РґСЂРµСЃР°
 		if(size_address == NRF_ADDRESS_LENGTH_3_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_3_BYTE;
 		if(size_address == NRF_ADDRESS_LENGTH_4_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_4_BYTE;
 		if(size_address == NRF_ADDRESS_LENGTH_5_BYTE_VALUE) reg_value = NRF_ADDRESS_LENGTH_5_BYTE;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_SETUP_AW, 0x01, &reg_value);
 
-		//Запомним длину адреса
+		//Р—Р°РїРѕРјРЅРёРј РґР»РёРЅСѓ Р°РґСЂРµСЃР°
 		nrf_size_address = size_address;
 
-		//Настроим параметры повтора отправки сообщения, 2000 мкс, 3 отправки
+		//РќР°СЃС‚СЂРѕРёРј РїР°СЂР°РјРµС‚СЂС‹ РїРѕРІС‚РѕСЂР° РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ, 2000 РјРєСЃ, 3 РѕС‚РїСЂР°РІРєРё
 		reg_value = (0x07 << NRF_ARD_BIT_LEFT_SHIFT) | 0x03;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_SETUP_RETR, 0x01, &reg_value);
 
-		//Номер канала по умолчанию
+		//РќРѕРјРµСЂ РєР°РЅР°Р»Р° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 		reg_value = NRF_RADIO_CHANNEL_DEFAULT;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_CH, 0x01, &reg_value);
 
-		//Настройм скорость обмена и мощность
-		//Скорость 250К для большей чувствительности, мощность 0 дБм
+		//РќР°СЃС‚СЂРѕР№Рј СЃРєРѕСЂРѕСЃС‚СЊ РѕР±РјРµРЅР° Рё РјРѕС‰РЅРѕСЃС‚СЊ
+		//РЎРєРѕСЂРѕСЃС‚СЊ 250Рљ РґР»СЏ Р±РѕР»СЊС€РµР№ С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё, РјРѕС‰РЅРѕСЃС‚СЊ 0 РґР‘Рј
 		reg_value = NRF_REGISTER_RF_SETUP_RF_DR_LOW | (NRF_RF_PWR_0DBM << NRF_RF_PWR_BIT_LEFT_SHIFT);
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_SETUP, 0x01, &reg_value);
 
-		//Запомним скорость и мощность
+		//Р—Р°РїРѕРјРЅРёРј СЃРєРѕСЂРѕСЃС‚СЊ Рё РјРѕС‰РЅРѕСЃС‚СЊ
 		nrf_power_and_baudrate = reg_value;
 
-		//Сброс флагов прерываний
+		//РЎР±СЂРѕСЃ С„Р»Р°РіРѕРІ РїСЂРµСЂС‹РІР°РЅРёР№
 		reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_STATUS, 0x01, &reg_value);
 
-		//Отчистка FIFO приёмника
+		//РћС‚С‡РёСЃС‚РєР° FIFO РїСЂРёС‘РјРЅРёРєР°
 		status = NRF_FLUSH_RX();
 
-		//Отчистка FIFO передатчика
+		//РћС‚С‡РёСЃС‚РєР° FIFO РїРµСЂРµРґР°С‚С‡РёРєР°
 		status = NRF_FLUSH_TX();
 
-		//Пока запретим динамическую длину пакетов и подтверждения для всеx PIPE
+		//РџРѕРєР° Р·Р°РїСЂРµС‚РёРј РґРёРЅР°РјРёС‡РµСЃРєСѓСЋ РґР»РёРЅСѓ РїР°РєРµС‚РѕРІ Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РґР»СЏ РІСЃРµx PIPE
 		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &reg_value);
 
-		//Запомним
+		//Р—Р°РїРѕРјРЅРёРј
 		nrf_dynpd = reg_value;
 
-		//Пока запретим подтверждение, динамическую длину данных и подтверждения
+		//РџРѕРєР° Р·Р°РїСЂРµС‚РёРј РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ, РґРёРЅР°РјРёС‡РµСЃРєСѓСЋ РґР»РёРЅСѓ РґР°РЅРЅС‹С… Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 		reg_value = 0x00;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &reg_value);
 
-		//Запомним
+		//Р—Р°РїРѕРјРЅРёРј
 		nrf_feature = reg_value;
 
-		//Сброс регистра статусов
+		//РЎР±СЂРѕСЃ СЂРµРіРёСЃС‚СЂР° СЃС‚Р°С‚СѓСЃРѕРІ
 		reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_STATUS, 0x01, &reg_value);
 
-		//Сброс автомата состояний
+		//РЎР±СЂРѕСЃ Р°РІС‚РѕРјР°С‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№
 		nrf_machine_state = NRF_MACHINE_STATE_FREE;
 
-		//Сброс размеров данных
+		//РЎР±СЂРѕСЃ СЂР°Р·РјРµСЂРѕРІ РґР°РЅРЅС‹С…
 		nrf_transmit_data_size = 0x00;
 		nrf_receive_data_size = 0x00;
 	}
@@ -147,33 +147,33 @@ uint8_t NRF_INIT(uint8_t size_address)
 	return status;
 }
 
-//Чтение регистра
+//Р§С‚РµРЅРёРµ СЂРµРіРёСЃС‚СЂР°
 uint8_t NRF_READ_REGISTER(uint8_t address, uint8_t size, uint8_t *value)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(value == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду чтения из регистра
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ С‡С‚РµРЅРёСЏ РёР· СЂРµРіРёСЃС‚СЂР°
 		nrf_data_out[0x00] = NRF_SPI_CMD_R_REGISTER | (address & NRF_REGISTER_ADDRESS_MASK);
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = 0x00;
 		}
 
-		//Читаем регистр
+		//Р§РёС‚Р°РµРј СЂРµРіРёСЃС‚СЂ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 			for(i = 0x00; i < size; i++)
 			{
@@ -185,33 +185,33 @@ uint8_t NRF_READ_REGISTER(uint8_t address, uint8_t size, uint8_t *value)
 	return status;
 }
 
-//Запись регистра
+//Р—Р°РїРёСЃСЊ СЂРµРіРёСЃС‚СЂР°
 uint8_t NRF_WRITE_REGISTER(uint8_t address, uint8_t size, uint8_t *value)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(value == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду записи в регистр
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ Р·Р°РїРёСЃРё РІ СЂРµРіРёСЃС‚СЂ
 		nrf_data_out[0x00] = NRF_SPI_CMD_W_REGISTER | (address & NRF_REGISTER_ADDRESS_MASK);
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = value[i];
 		}
 
-		//Пишем в регистр
+		//РџРёС€РµРј РІ СЂРµРіРёСЃС‚СЂ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 		}
 	}
@@ -219,33 +219,33 @@ uint8_t NRF_WRITE_REGISTER(uint8_t address, uint8_t size, uint8_t *value)
 	return status;
 }
 
-//Чтение принятых данных
+//Р§С‚РµРЅРёРµ РїСЂРёРЅСЏС‚С‹С… РґР°РЅРЅС‹С…
 uint8_t NRF_READ_RX_PAYLOAD(uint8_t size, uint8_t *data)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(data == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду чтения данных
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ С‡С‚РµРЅРёСЏ РґР°РЅРЅС‹С…
 		nrf_data_out[0x00] = NRF_SPI_R_RX_PAYLOAD;
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = 0x00;
 		}
 
-		//Пишем команду
+		//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 			for(i = 0x00; i < size; i++)
 			{
@@ -257,33 +257,33 @@ uint8_t NRF_READ_RX_PAYLOAD(uint8_t size, uint8_t *data)
 	return status;
 }
 
-//Запись данных на передачу
+//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РЅР° РїРµСЂРµРґР°С‡Сѓ
 uint8_t NRF_WRITE_TX_PAYLOAD(uint8_t size, uint8_t *data)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(data == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду записи данных
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С…
 		nrf_data_out[0x00] = NRF_SPI_W_TX_PAYLOAD;
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = data[i];
 		}
 
-		//Пишем команду
+		//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 		}
 	}
@@ -291,92 +291,92 @@ uint8_t NRF_WRITE_TX_PAYLOAD(uint8_t size, uint8_t *data)
 	return status;
 }
 
-//Отчистка TX FIFO
+//РћС‚С‡РёСЃС‚РєР° TX FIFO
 uint8_t NRF_FLUSH_TX(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 
-	//Формируем команду
+	//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 	nrf_data_out[0x00] = NRF_SPI_FLUSH_TX;
 
-	//Пишем команду
+	//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 	status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, 0x01);
 
-	//Проверка статуса
+	//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 	if(status == NRF_ERROR_CODE_SUCCESS)
 	{
-		//Формируем ответ
+		//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 		nrf_status_register = nrf_data_in[0x00];
 	}
 
 	return status;
 }
 
-//Отчистка RX FIFO
+//РћС‚С‡РёСЃС‚РєР° RX FIFO
 uint8_t NRF_FLUSH_RX(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 
-	//Формируем команду
+	//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 	nrf_data_out[0x00] = NRF_SPI_FLUSH_RX;
 
-	//Пишем команду
+	//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 	status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, 0x01);
 
-	//Проверка статуса
+	//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 	if(status == NRF_ERROR_CODE_SUCCESS)
 	{
-		//Формируем ответ
+		//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 		nrf_status_register = nrf_data_in[0x00];
 	}
 
 	return status;
 }
 
-//Повторное использование последних переданных данных
+//РџРѕРІС‚РѕСЂРЅРѕРµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РїРѕСЃР»РµРґРЅРёС… РїРµСЂРµРґР°РЅРЅС‹С… РґР°РЅРЅС‹С…
 uint8_t NRF_REUSE_TX_PAYLOAD(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 
-	//Формируем команду
+	//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 	nrf_data_out[0x00] = NRF_SPI_REUSE_TX_PL;
 
-	//Пишем команду
+	//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 	status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, 0x01);
 
-	//Проверка статуса
+	//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 	if(status == NRF_ERROR_CODE_SUCCESS)
 	{
-		//Формируем ответ
+		//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 		nrf_status_register = nrf_data_in[0x00];
 	}
 
 	return status;
 }
 
-//Чтение размера данных на верху FIFO
+//Р§С‚РµРЅРёРµ СЂР°Р·РјРµСЂР° РґР°РЅРЅС‹С… РЅР° РІРµСЂС…Сѓ FIFO
 uint8_t NRF_READ_RX_PAYLOAD_WIDTH(uint8_t *width)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(width == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду чтения ширины данных
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ С‡С‚РµРЅРёСЏ С€РёСЂРёРЅС‹ РґР°РЅРЅС‹С…
 		nrf_data_out[0x00] = NRF_SPI_R_RX_PL_WID;
 		nrf_data_out[0x01] = 0x00;
 
-		//Пишем команду
+		//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, 0x02);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 			*width = nrf_data_in[0x01];
 		}
@@ -385,33 +385,33 @@ uint8_t NRF_READ_RX_PAYLOAD_WIDTH(uint8_t *width)
 	return status;
 }
 
-//Запись данных для ответа ACK
+//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РґР»СЏ РѕС‚РІРµС‚Р° ACK
 uint8_t NRF_WRITE_ACK_PAYLOAD(uint8_t pipe, uint8_t size, uint8_t *data)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(data == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду записи данных
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С…
 		nrf_data_out[0x00] = NRF_SPI_W_ACK_PAYLOAD | (pipe & NRF_REGISTER_PIPE_MASK);
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = data[i];
 		}
 
-		//Пишем команду
+		//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 		}
 	}
@@ -419,33 +419,33 @@ uint8_t NRF_WRITE_ACK_PAYLOAD(uint8_t pipe, uint8_t size, uint8_t *data)
 	return status;
 }
 
-//Запись данных на передачу без подтверждения
+//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РЅР° РїРµСЂРµРґР°С‡Сѓ Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 uint8_t NRF_WRITE_TX_PAYLOAD_NO_ACK(uint8_t size, uint8_t *data)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(data == NULL)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Формируем команду записи данных
+		//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С…
 		nrf_data_out[0x00] = NRF_SPI_W_TX_PAYLOAD_NO_ACK;
 		for(i = 0x00; i < size; i++)
 		{
 			nrf_data_out[i + 0x01] = data[i];
 		}
 
-		//Пишем команду
+		//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 		status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, size + 0x01);
 
-		//Проверка статуса
+		//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 		if(status == NRF_ERROR_CODE_SUCCESS)
 		{
-			//Формируем ответ
+			//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 			nrf_status_register = nrf_data_in[0x00];
 		}
 	}
@@ -453,41 +453,41 @@ uint8_t NRF_WRITE_TX_PAYLOAD_NO_ACK(uint8_t size, uint8_t *data)
 	return status;
 }
 
-//Команда NOP
+//РљРѕРјР°РЅРґР° NOP
 uint8_t NRF_NOP(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 
-	//Формируем команду
+	//Р¤РѕСЂРјРёСЂСѓРµРј РєРѕРјР°РЅРґСѓ
 	nrf_data_out[0x00] = NRF_SPI_NOP;
 
-	//Пишем команду
+	//РџРёС€РµРј РєРѕРјР°РЅРґСѓ
 	status = NRF_HAL_SPI_EXCHANGE(nrf_data_out, nrf_data_in, 0x01);
 
-	//Проверка статуса
+	//РџСЂРѕРІРµСЂРєР° СЃС‚Р°С‚СѓСЃР°
 	if(status == NRF_ERROR_CODE_SUCCESS)
 	{
-		//Формируем ответ
+		//Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚РІРµС‚
 		nrf_status_register = nrf_data_in[0x00];
 	}
 
 	return status;
 }
 
-//Запись адреса на приём
+//Р—Р°РїРёСЃСЊ Р°РґСЂРµСЃР° РЅР° РїСЂРёС‘Рј
 uint8_t NRF_WRITE_RX_ADDRESS(uint8_t pipe, uint8_t *addr, uint8_t size)
 {
 	uint8_t status;
 	uint8_t reg_address;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (size != nrf_size_address))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Зададим адрес регистра для адреса приёма в зависимости от номера PIPE
+		//Р—Р°РґР°РґРёРј Р°РґСЂРµСЃ СЂРµРіРёСЃС‚СЂР° РґР»СЏ Р°РґСЂРµСЃР° РїСЂРёС‘РјР° РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РЅРѕРјРµСЂР° PIPE
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_0) reg_address = NRF_REGISTER_RX_ADDR_P0;
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_1) reg_address = NRF_REGISTER_RX_ADDR_P1;
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_2) reg_address = NRF_REGISTER_RX_ADDR_P2;
@@ -501,12 +501,12 @@ uint8_t NRF_WRITE_RX_ADDRESS(uint8_t pipe, uint8_t *addr, uint8_t size)
 	return status;
 }
 
-//Запись адреса на передачу
+//Р—Р°РїРёСЃСЊ Р°РґСЂРµСЃР° РЅР° РїРµСЂРµРґР°С‡Сѓ
 uint8_t NRF_WRITE_TX_ADDRESS(uint8_t *addr, uint8_t size)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(size != nrf_size_address)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
@@ -519,12 +519,12 @@ uint8_t NRF_WRITE_TX_ADDRESS(uint8_t *addr, uint8_t size)
 	return status;
 }
 
-//Задание радиоканала, 0 - 125
+//Р—Р°РґР°РЅРёРµ СЂР°РґРёРѕРєР°РЅР°Р»Р°, 0 - 125
 uint8_t NRF_SET_CHANNEL(uint8_t channel)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(channel > NRF_RADIO_CHANNEL_NUMBER_MAXIMUM)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
@@ -537,13 +537,13 @@ uint8_t NRF_SET_CHANNEL(uint8_t channel)
 	return status;
 }
 
-//Задание параметров повторной передачи пакетов
+//Р—Р°РґР°РЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РїРѕРІС‚РѕСЂРЅРѕР№ РїРµСЂРµРґР°С‡Рё РїР°РєРµС‚РѕРІ
 uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc)
 {
 	uint8_t status;
 	uint8_t reg_value;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((ard > NRF_ARD_MAXIMUM) || (arc > NRF_ARC_MAXIMUM))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
@@ -557,22 +557,22 @@ uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc)
 	return status;
 }
 
-//Задать размер CRC, 1/2
+//Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ CRC, 1/2
 uint8_t NRF_SET_CRC_SIZE(uint8_t size)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((size != NRF_CRC_LENGTH_1_BYTE) && (size != NRF_CRC_LENGTH_2_BYTE))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Сбросим бит
+		//РЎР±СЂРѕСЃРёРј Р±РёС‚
 		nrf_config &= ~NRF_REGISTER_CONFIG_CRCO;
 
-		//Выставим биты
+		//Р’С‹СЃС‚Р°РІРёРј Р±РёС‚С‹
 		nrf_config |= NRF_REGISTER_CONFIG_EN_CRC;
 		if(size == NRF_CRC_LENGTH_2_BYTE) nrf_config |= NRF_REGISTER_CONFIG_CRCO;
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
@@ -581,22 +581,22 @@ uint8_t NRF_SET_CRC_SIZE(uint8_t size)
 	return status;
 }
 
-//Задать мощность передачтчика
+//Р—Р°РґР°С‚СЊ РјРѕС‰РЅРѕСЃС‚СЊ РїРµСЂРµРґР°С‡С‚С‡РёРєР°
 uint8_t NRF_SET_POWER(uint8_t power)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(power > NRF_RF_PWR_0DBM)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Сброс бит задания мощность
+		//РЎР±СЂРѕСЃ Р±РёС‚ Р·Р°РґР°РЅРёСЏ РјРѕС‰РЅРѕСЃС‚СЊ
 		nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_PWR_MASK;
 
-		//Зааём новое значение мощности
+		//Р—Р°Р°С‘Рј РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РјРѕС‰РЅРѕСЃС‚Рё
 		nrf_power_and_baudrate = (power << NRF_RF_PWR_BIT_LEFT_SHIFT);
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_RF_SETUP, 0x01, &nrf_power_and_baudrate);
 	}
@@ -604,19 +604,19 @@ uint8_t NRF_SET_POWER(uint8_t power)
 	return status;
 }
 
-//Задать скорость обмена
+//Р—Р°РґР°С‚СЊ СЃРєРѕСЂРѕСЃС‚СЊ РѕР±РјРµРЅР°
 uint8_t NRF_SET_BAUDRATE(uint8_t baudrate)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(baudrate > NRF_DATA_RATE_2M)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Новое значение скорости
+		//РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ СЃРєРѕСЂРѕСЃС‚Рё
 		if(baudrate == NRF_DATA_RATE_250K)
 		{
 			nrf_power_and_baudrate &= ~NRF_REGISTER_RF_SETUP_RF_DR_HIGH;
@@ -639,20 +639,20 @@ uint8_t NRF_SET_BAUDRATE(uint8_t baudrate)
 	return status;
 }
 
-//Задать размер данных на приём для заданного PIPE, от 0 (не используется) до 32, для режима Static Length
+//Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ РґР°РЅРЅС‹С… РЅР° РїСЂРёС‘Рј РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ PIPE, РѕС‚ 0 (РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ) РґРѕ 32, РґР»СЏ СЂРµР¶РёРјР° Static Length
 uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length)
 {
 	uint8_t status;
 	uint8_t reg_address;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (length > NRF_RF_MAXIMUM_DATA_EXCHANGE_SIZE))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Зададим адрес регистра длины принимаемых данных в зависимости от номера PIPE
+		//Р—Р°РґР°РґРёРј Р°РґСЂРµСЃ СЂРµРіРёСЃС‚СЂР° РґР»РёРЅС‹ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РЅРѕРјРµСЂР° PIPE
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_0) reg_address = NRF_REGISTER_RX_PW_P0;
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_1) reg_address = NRF_REGISTER_RX_PW_P1;
 		if(pipe == NRF_RX_DATA_PIPE_NUMBER_2) reg_address = NRF_REGISTER_RX_PW_P2;
@@ -666,146 +666,146 @@ uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length)
 	return status;
 }
 
-//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа, данные в ответе
+//РќР°СЃС‚СЂРѕР№РєР° PIPE, СЂР°Р·СЂРµС€РёС‚СЊ РїСЂРёС‘Рј, СЂР°Р·СЂРµС€РёС‚СЊ РѕС‚РІРµС‚, СЂР°Р·СЂРµС€РёС‚СЊ РґРёРЅР°РјРёС‡РµСЃРєСѓСЋ РґР»РёРЅСѓ РѕС‚РІРµС‚Р°, РґР°РЅРЅС‹Рµ РІ РѕС‚РІРµС‚Рµ
 uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload)
 {
 	uint8_t status;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if(pipe > NRF_RX_DATA_PIPE_NUMBER_5)
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Разрешён PIPE
+		//Р Р°Р·СЂРµС€С‘РЅ PIPE
 		if(en_pipe == NRF_STATE_ON)
 		{
-			//Если разрешён
+			//Р•СЃР»Рё СЂР°Р·СЂРµС€С‘РЅ
 			nrf_rxaddr |= (NRF_REGISTER_EN_RXADDR_ERX_0 << pipe);
 		}
 		else
 		{
-			//Если запрещён
+			//Р•СЃР»Рё Р·Р°РїСЂРµС‰С‘РЅ
 			nrf_rxaddr &= ~(NRF_REGISTER_EN_RXADDR_ERX_0 << pipe);
 		}
 
-		//Пишем в регистр
+		//РџРёС€РµРј РІ СЂРµРіРёСЃС‚СЂ
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_RXADDR, 0x01, &nrf_rxaddr);
 
-		//Разрешён ли ACK для PIPE
+		//Р Р°Р·СЂРµС€С‘РЅ Р»Рё ACK РґР»СЏ PIPE
 		if(en_ack == NRF_STATE_ON)
 		{
-			//Если разрешён
+			//Р•СЃР»Рё СЂР°Р·СЂРµС€С‘РЅ
 			nrf_enaa |= (NRF_REGISTER_EN_AA_ENAA_P0 << pipe);
 		}
 		else
 		{
-			//Если запрещён
+			//Р•СЃР»Рё Р·Р°РїСЂРµС‰С‘РЅ
 			nrf_enaa &= ~(NRF_REGISTER_EN_AA_ENAA_P0 << pipe);
 		}
 
-		//Пишем в регистр
+		//РџРёС€РµРј РІ СЂРµРіРёСЃС‚СЂ
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_EN_AA, 0x01, &nrf_enaa);
 
-		//Разрешена ли динамическая длина данных
+		//Р Р°Р·СЂРµС€РµРЅР° Р»Рё РґРёРЅР°РјРёС‡РµСЃРєР°СЏ РґР»РёРЅР° РґР°РЅРЅС‹С…
 		if(en_dpl == NRF_STATE_ON)
 		{
-			//Если разрешён
+			//Р•СЃР»Рё СЂР°Р·СЂРµС€С‘РЅ
 			nrf_dynpd |= (NRF_REGISTER_DYNPD_DPL_P0 << pipe);
 		}
 		else
 		{
-			//Если запрещён
+			//Р•СЃР»Рё Р·Р°РїСЂРµС‰С‘РЅ
 			nrf_dynpd &= ~(NRF_REGISTER_DYNPD_DPL_P0 << pipe);
 		}
 
-		//Разрешены ли данные в ответе ACK
+		//Р Р°Р·СЂРµС€РµРЅС‹ Р»Рё РґР°РЅРЅС‹Рµ РІ РѕС‚РІРµС‚Рµ ACK
 		if(en_ack_payload == NRF_STATE_ON)
 		{
-			//Если разрешён
-			//Тут же включим EN_DYN_ACK
-			//Тут же нужно включить для приёма ACK бит DYN_PD0
+			//Р•СЃР»Рё СЂР°Р·СЂРµС€С‘РЅ
+			//РўСѓС‚ Р¶Рµ РІРєР»СЋС‡РёРј EN_DYN_ACK
+			//РўСѓС‚ Р¶Рµ РЅСѓР¶РЅРѕ РІРєР»СЋС‡РёС‚СЊ РґР»СЏ РїСЂРёС‘РјР° ACK Р±РёС‚ DYN_PD0
 			nrf_feature |= NRF_REGISTER_FEATURE_EN_ACK_PAY;
 			nrf_feature |= NRF_REGISTER_FEATURE_EN_DYN_ACK;
 			nrf_dynpd |= NRF_REGISTER_DYNPD_DPL_P0;
 		}
 		else
 		{
-			//Если запрещён
-			//Тут же выключим EN_DYN_ACK
+			//Р•СЃР»Рё Р·Р°РїСЂРµС‰С‘РЅ
+			//РўСѓС‚ Р¶Рµ РІС‹РєР»СЋС‡РёРј EN_DYN_ACK
 			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_ACK_PAY;
 			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_DYN_ACK;
 		}
 
-		//Пишем в регистр
+		//РџРёС€РµРј РІ СЂРµРіРёСЃС‚СЂ
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_DYNPD, 0x01, &nrf_dynpd);
 
-		//Если выставлен хоть один бит NRF_REGISTER_DYNPD, то нужно включить бит EN_DPL регистра NRF_REGISTER_FEATURE
-		//Если ноль, то выключить
+		//Р•СЃР»Рё РІС‹СЃС‚Р°РІР»РµРЅ С…РѕС‚СЊ РѕРґРёРЅ Р±РёС‚ NRF_REGISTER_DYNPD, С‚Рѕ РЅСѓР¶РЅРѕ РІРєР»СЋС‡РёС‚СЊ Р±РёС‚ EN_DPL СЂРµРіРёСЃС‚СЂР° NRF_REGISTER_FEATURE
+		//Р•СЃР»Рё РЅРѕР»СЊ, С‚Рѕ РІС‹РєР»СЋС‡РёС‚СЊ
 		if(nrf_dynpd != 0x00)
 		{
-			//Включим
+			//Р’РєР»СЋС‡РёРј
 			nrf_feature |= NRF_REGISTER_FEATURE_EN_DPL;
 		}
 		else
 		{
-			//Выключим
+			//Р’С‹РєР»СЋС‡РёРј
 			nrf_feature &= ~NRF_REGISTER_FEATURE_EN_DPL;
 		}
 
-		//Пишем в регистр
+		//РџРёС€РµРј РІ СЂРµРіРёСЃС‚СЂ
 		status = NRF_WRITE_REGISTER(NRF_REGISTER_FEATURE, 0x01, &nrf_feature);
 	}
 
 	return status;
 }
 
-//Запуск передачи пакета
+//Р—Р°РїСѓСЃРє РїРµСЂРµРґР°С‡Рё РїР°РєРµС‚Р°
 uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((data == NULL) || (size == 0x00) || (timeout == 0x00))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Проверка автомата состояний
+		//РџСЂРѕРІРµСЂРєР° Р°РІС‚РѕРјР°С‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№
 		if(nrf_machine_state != NRF_MACHINE_STATE_FREE)
 		{
-			//Автомта состояний занят
+			//РђРІС‚РѕРјС‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№ Р·Р°РЅСЏС‚
 			return NRF_ERROR_CODE_CHANNEL_BUSY;
 		}
 		else
 		{
-			//Линию CE в 0
+			//Р›РёРЅРёСЋ CE РІ 0
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_OFF);
 
-			//Выставим состояние автомата
+			//Р’С‹СЃС‚Р°РІРёРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕРјР°С‚Р°
 			nrf_machine_state = NRF_MACHINE_STATE_START_SEND;
 
-			//Запуск таймаута на ожидание завершения передачи
+			//Р—Р°РїСѓСЃРє С‚Р°Р№РјР°СѓС‚Р° РЅР° РѕР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ РїРµСЂРµРґР°С‡Рё
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_TIMEOUT, timeout);
 
-			//Включаем приёмопередатчик, PWR_UP = 1
+			//Р’РєР»СЋС‡Р°РµРј РїСЂРёС‘РјРѕРїРµСЂРµРґР°С‚С‡РёРє, PWR_UP = 1
 			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP;
 			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
-			//Запуск таймаута для паузы на время включения
+			//Р—Р°РїСѓСЃРє С‚Р°Р№РјР°СѓС‚Р° РґР»СЏ РїР°СѓР·С‹ РЅР° РІСЂРµРјСЏ РІРєР»СЋС‡РµРЅРёСЏ
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_DELAY, NRF_TIME_POWER_UP);
 
-			//Сохраним данные для передачи
+			//РЎРѕС…СЂР°РЅРёРј РґР°РЅРЅС‹Рµ РґР»СЏ РїРµСЂРµРґР°С‡Рё
 			for(i = 0x00; i < size; i++)
 			{
 				nrf_transmit_data[i] = data[i];
 			}
 			nrf_transmit_data_size = size;
 
-			//Флаг передачи без подтверждения
+			//Р¤Р»Р°Рі РїРµСЂРµРґР°С‡Рё Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 			if(no_ack_flag == NRF_STATE_ON)
 			{
 				nrf_tx_no_ack_flag = NRF_STATE_ON;
@@ -820,54 +820,54 @@ uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_
 	return status;
 }
 
-//Запуск приёма пакета
+//Р—Р°РїСѓСЃРє РїСЂРёС‘РјР° РїР°РєРµС‚Р°
 uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_t timeout)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((timeout == 0x00) || (ack_pipe > NRF_RX_DATA_PIPE_NUMBER_5) || (data == NULL) || (size == 0x00) || (timeout == 0x00))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Проверка автомата состояний
+		//РџСЂРѕРІРµСЂРєР° Р°РІС‚РѕРјР°С‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№
 		if(nrf_machine_state != NRF_MACHINE_STATE_FREE)
 		{
-			//Автомта состояний занят
+			//РђРІС‚РѕРјС‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№ Р·Р°РЅСЏС‚
 			return NRF_ERROR_CODE_CHANNEL_BUSY;
 		}
 		else
 		{
-			//Линию CE в 0
+			//Р›РёРЅРёСЋ CE РІ 0
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_OFF);
 
-			//Выставим состояние автомата
+			//Р’С‹СЃС‚Р°РІРёРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕРјР°С‚Р°
 			nrf_machine_state = NRF_MACHINE_STATE_START_RECEIVE;
 
-			//Запуск таймаута на ожидание завершения передачи
+			//Р—Р°РїСѓСЃРє С‚Р°Р№РјР°СѓС‚Р° РЅР° РѕР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ РїРµСЂРµРґР°С‡Рё
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_TIMEOUT, timeout);
 
-			//Включаем приёмопередатчик, PWR_UP = 1
+			//Р’РєР»СЋС‡Р°РµРј РїСЂРёС‘РјРѕРїРµСЂРµРґР°С‚С‡РёРє, PWR_UP = 1
 			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP;
 			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
-			//Запуск таймаута для паузы на время включения
+			//Р—Р°РїСѓСЃРє С‚Р°Р№РјР°СѓС‚Р° РґР»СЏ РїР°СѓР·С‹ РЅР° РІСЂРµРјСЏ РІРєР»СЋС‡РµРЅРёСЏ
 			NRF_HAL_START_TIMEOUT(NRF_TIMER_DELAY, NRF_TIME_POWER_UP);
 
-			//Сохраним данные для передачи ACK
+			//РЎРѕС…СЂР°РЅРёРј РґР°РЅРЅС‹Рµ РґР»СЏ РїРµСЂРµРґР°С‡Рё ACK
 			for(i = 0x00; i < size; i++)
 			{
 				nrf_transmit_data[i] = data[i];
 			}
 			nrf_transmit_data_size = size;
 
-			//Сброс размера данных
+			//РЎР±СЂРѕСЃ СЂР°Р·РјРµСЂР° РґР°РЅРЅС‹С…
 			nrf_receive_data_size = 0x00;
 
-			//Запомним PIPE
+			//Р—Р°РїРѕРјРЅРёРј PIPE
 			nrf_ack_pipe_number = ack_pipe;
 		}
 	}
@@ -875,231 +875,231 @@ uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_
 	return status;
 }
 
-//Получить принятые данные
+//РџРѕР»СѓС‡РёС‚СЊ РїСЂРёРЅСЏС‚С‹Рµ РґР°РЅРЅС‹Рµ
 uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_size)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t i;
 
-	//Проверка аргументов
+	//РџСЂРѕРІРµСЂРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 	if((data == NULL) || (data_size == NULL) || (buffer_size < nrf_receive_data_size))
 	{
 		return NRF_ERROR_CODE_INVALID_DATA_PARAMS;
 	}
 	else
 	{
-		//Выдадим данные
+		//Р’С‹РґР°РґРёРј РґР°РЅРЅС‹Рµ
 		for(i = 0x00; i < nrf_receive_data_size; i++)
 		{
 			data[i] = nrf_receive_data[i];
 		}
 		*data_size = nrf_receive_data_size;
 
-		//Сброс размера данных
+		//РЎР±СЂРѕСЃ СЂР°Р·РјРµСЂР° РґР°РЅРЅС‹С…
 		nrf_receive_data_size = 0x00;
 	}
 
 	return status;
 }
 
-//Обработка приёма и передачи
+//РћР±СЂР°Р±РѕС‚РєР° РїСЂРёС‘РјР° Рё РїРµСЂРµРґР°С‡Рё
 uint8_t NRF_EXCHANGE_PROCESSING(void)
 {
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t irq_state = NRF_STATE_OFF;
 
-	//Поведение зависит от состояния автомата
+	//РџРѕРІРµРґРµРЅРёРµ Р·Р°РІРёСЃРёС‚ РѕС‚ СЃРѕСЃС‚РѕСЏРЅРёСЏ Р°РІС‚РѕРјР°С‚Р°
 
-	//Была запущена передача данных
+	//Р‘С‹Р»Р° Р·Р°РїСѓС‰РµРЅР° РїРµСЂРµРґР°С‡Р° РґР°РЅРЅС‹С…
 	if(nrf_machine_state == NRF_MACHINE_STATE_START_SEND)
 	{
-		//Запущена передача данных
+		//Р—Р°РїСѓС‰РµРЅР° РїРµСЂРµРґР°С‡Р° РґР°РЅРЅС‹С…
 
-		//Ожидаем истечения паузы включение приёмопередатчика
+		//РћР¶РёРґР°РµРј РёСЃС‚РµС‡РµРЅРёСЏ РїР°СѓР·С‹ РІРєР»СЋС‡РµРЅРёРµ РїСЂРёС‘РјРѕРїРµСЂРµРґР°С‚С‡РёРєР°
 		if(NRF_HAL_STATUS_TIMEOUT(NRF_TIMER_DELAY) == NRF_ERROR_CODE_TIMEOUT)
 		{
-			//Пауза истекла, меняем состояние автомата
+			//РџР°СѓР·Р° РёСЃС‚РµРєР»Р°, РјРµРЅСЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕРјР°С‚Р°
 			nrf_machine_state = NRF_MACHINE_STATE_WAIT_SEND;
 
-			//Загружаем данные в FIFO на передачу
+			//Р—Р°РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ FIFO РЅР° РїРµСЂРµРґР°С‡Сѓ
 			if(nrf_tx_no_ack_flag == NRF_STATE_ON)
 			{
-				//Если без подтверждения
+				//Р•СЃР»Рё Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
 				NRF_WRITE_TX_PAYLOAD_NO_ACK(nrf_transmit_data_size, nrf_transmit_data);
 			}
 			else
 			{
-				//Если с подтверждением
+				//Р•СЃР»Рё СЃ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµРј
 				NRF_WRITE_TX_PAYLOAD(nrf_transmit_data_size, nrf_transmit_data);
 			}
 
-			//Сброс размера данных
+			//РЎР±СЂРѕСЃ СЂР°Р·РјРµСЂР° РґР°РЅРЅС‹С…
 			nrf_transmit_data_size = 0x00;
 
-			//Пауза
+			//РџР°СѓР·Р°
 			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_TRANSMIT);
 
-			//Выставляем сигнал CE в 1
+			//Р’С‹СЃС‚Р°РІР»СЏРµРј СЃРёРіРЅР°Р» CE РІ 1
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_ON);
 
-			//Пауза
+			//РџР°СѓР·Р°
 			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_TRANSMIT);
 
-			//Выставляем сигнал CE в 0
+			//Р’С‹СЃС‚Р°РІР»СЏРµРј СЃРёРіРЅР°Р» CE РІ 0
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_OFF);
 
-		    //Остановим таймер
+		    //РћСЃС‚Р°РЅРѕРІРёРј С‚Р°Р№РјРµСЂ
 			NRF_HAL_STOP_TIMEOUT(NRF_TIMER_DELAY);
 		}
 	}
 	else
-	//Ждём завершения отправки данных
+	//Р–РґС‘Рј Р·Р°РІРµСЂС€РµРЅРёСЏ РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С…
 	if(nrf_machine_state == NRF_MACHINE_STATE_WAIT_SEND)
 	{
-		//Проверяем статус прерывания
-		//Если было прерывание, то читаем статус и из него смотри, что за прерывание
-		//Либо ждём истечения таймаута
+		//РџСЂРѕРІРµСЂСЏРµРј СЃС‚Р°С‚СѓСЃ РїСЂРµСЂС‹РІР°РЅРёСЏ
+		//Р•СЃР»Рё Р±С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёРµ, С‚Рѕ С‡РёС‚Р°РµРј СЃС‚Р°С‚СѓСЃ Рё РёР· РЅРµРіРѕ СЃРјРѕС‚СЂРё, С‡С‚Рѕ Р·Р° РїСЂРµСЂС‹РІР°РЅРёРµ
+		//Р›РёР±Рѕ Р¶РґС‘Рј РёСЃС‚РµС‡РµРЅРёСЏ С‚Р°Р№РјР°СѓС‚Р°
 
-		//Запрос состояния прерывания
+		//Р—Р°РїСЂРѕСЃ СЃРѕСЃС‚РѕСЏРЅРёСЏ РїСЂРµСЂС‹РІР°РЅРёСЏ
 		NRF_HAL_GET_IRQ_STATE(&irq_state);
 
-		//Смотрим было ли прерывание
+		//РЎРјРѕС‚СЂРёРј Р±С‹Р»Рѕ Р»Рё РїСЂРµСЂС‹РІР°РЅРёРµ
 		if(irq_state == NRF_STATE_ON)
 		{
-			//Было прерывание, нужно прочесть регистр статуса, достаточно команды NOP
+			//Р‘С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёРµ, РЅСѓР¶РЅРѕ РїСЂРѕС‡РµСЃС‚СЊ СЂРµРіРёСЃС‚СЂ СЃС‚Р°С‚СѓСЃР°, РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РєРѕРјР°РЅРґС‹ NOP
 			NRF_NOP();
 
-			//Смотрим биты прерывания в регистре статуса
+			//РЎРјРѕС‚СЂРёРј Р±РёС‚С‹ РїСЂРµСЂС‹РІР°РЅРёСЏ РІ СЂРµРіРёСЃС‚СЂРµ СЃС‚Р°С‚СѓСЃР°
 
-			//Бит прерывания завершения передачи данных
+			//Р‘РёС‚ РїСЂРµСЂС‹РІР°РЅРёСЏ Р·Р°РІРµСЂС€РµРЅРёСЏ РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 			if(nrf_status_register & NRF_REGISTER_STATUS_TX_DS_BIT)
 			{
-				//Успешно передали данные
-				//И приняли ответ ACK с данными
+				//РЈСЃРїРµС€РЅРѕ РїРµСЂРµРґР°Р»Рё РґР°РЅРЅС‹Рµ
+				//Р РїСЂРёРЅСЏР»Рё РѕС‚РІРµС‚ ACK СЃ РґР°РЅРЅС‹РјРё
 
-				//Читаем длину данных в приёмном FIFO
+				//Р§РёС‚Р°РµРј РґР»РёРЅСѓ РґР°РЅРЅС‹С… РІ РїСЂРёС‘РјРЅРѕРј FIFO
 				NRF_READ_RX_PAYLOAD_WIDTH(&nrf_receive_data_size);
 
-				//Вычитываем данные
+				//Р’С‹С‡РёС‚С‹РІР°РµРј РґР°РЅРЅС‹Рµ
 				NRF_READ_RX_PAYLOAD(nrf_receive_data_size, nrf_receive_data);
 
-				//Остановка приёма или передачи данных
+				//РћСЃС‚Р°РЅРѕРІРєР° РїСЂРёС‘РјР° РёР»Рё РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 				NRF_STOP_PROCESSING();
 
-				//Выставим статус завершения передачи
+				//Р’С‹СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ Р·Р°РІРµСЂС€РµРЅРёСЏ РїРµСЂРµРґР°С‡Рё
 				status = NRF_ERROR_CODE_SEND_DATA_SUCCESS;
 			}
 
-			//Бит прерывания максимального числа попыток передачи данных
+			//Р‘РёС‚ РїСЂРµСЂС‹РІР°РЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ С‡РёСЃР»Р° РїРѕРїС‹С‚РѕРє РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 			if(nrf_status_register & NRF_REGISTER_STATUS_MAX_RT_BIT)
 			{
-				//Ошибка превышения максимального числа попыток отправки данных
+				//РћС€РёР±РєР° РїСЂРµРІС‹С€РµРЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ С‡РёСЃР»Р° РїРѕРїС‹С‚РѕРє РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С…
 
-				//Остановка передачи данных
+				//РћСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 				NRF_STOP_PROCESSING();
 
-				//Выставим статус ошибки
+				//Р’С‹СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ РѕС€РёР±РєРё
 				status = NRF_ERROR_CODE_SEND_MAX_RT_ERROR;
 			}
 		}
 		else
 		{
-			//Не было прерывания, проверим таймаут
+			//РќРµ Р±С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёСЏ, РїСЂРѕРІРµСЂРёРј С‚Р°Р№РјР°СѓС‚
 			if(NRF_HAL_STATUS_TIMEOUT(NRF_TIMER_TIMEOUT) == NRF_ERROR_CODE_TIMEOUT)
 			{
-				//Таймаут истёк
+				//РўР°Р№РјР°СѓС‚ РёСЃС‚С‘Рє
 
-				//Остановка передачи данных
+				//РћСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 				NRF_STOP_PROCESSING();
 
-				//Выставим статус таймаута
+				//Р’С‹СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ С‚Р°Р№РјР°СѓС‚Р°
 				status = NRF_ERROR_CODE_TIMEOUT;
 			}
 		}
 	}
 	else
-	//Был запущен приём данных
+	//Р‘С‹Р» Р·Р°РїСѓС‰РµРЅ РїСЂРёС‘Рј РґР°РЅРЅС‹С…
 	if(nrf_machine_state == NRF_MACHINE_STATE_START_RECEIVE)
 	{
-		//Запущен приём данных
+		//Р—Р°РїСѓС‰РµРЅ РїСЂРёС‘Рј РґР°РЅРЅС‹С…
 
-		//Ожидаем истечения паузы включение приёмопередатчика
+		//РћР¶РёРґР°РµРј РёСЃС‚РµС‡РµРЅРёСЏ РїР°СѓР·С‹ РІРєР»СЋС‡РµРЅРёРµ РїСЂРёС‘РјРѕРїРµСЂРµРґР°С‚С‡РёРєР°
 		if(NRF_HAL_STATUS_TIMEOUT(NRF_TIMER_DELAY) == NRF_ERROR_CODE_TIMEOUT)
 		{
-			//Пауза истекла, меняем состояние автомата
+			//РџР°СѓР·Р° РёСЃС‚РµРєР»Р°, РјРµРЅСЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕРјР°С‚Р°
 			nrf_machine_state = NRF_MACHINE_STATE_WAIT_RECEIVE;
 
-			//Загружаем данные в FIFO на передачу ACK, PIPE 1 для приёма данных
+			//Р—Р°РіСЂСѓР¶Р°РµРј РґР°РЅРЅС‹Рµ РІ FIFO РЅР° РїРµСЂРµРґР°С‡Сѓ ACK, PIPE 1 РґР»СЏ РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 			NRF_WRITE_ACK_PAYLOAD(nrf_ack_pipe_number, nrf_transmit_data_size, nrf_transmit_data);
 
-			//Выставим бит PRIM_RX в 1
+			//Р’С‹СЃС‚Р°РІРёРј Р±РёС‚ PRIM_RX РІ 1
 			nrf_config |= NRF_REGISTER_CONFIG_PWR_UP | NRF_REGISTER_CONFIG_PRIM_RX;
 			status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
-			//Пауза
+			//РџР°СѓР·Р°
 			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_RECEIVE);
 
-			//Выставляем сигнал CE в 1
+			//Р’С‹СЃС‚Р°РІР»СЏРµРј СЃРёРіРЅР°Р» CE РІ 1
 			NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_ON);
 
-			//Пауза
+			//РџР°СѓР·Р°
 			NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_START_RECEIVE);
 
-		    //Остановим таймер
+		    //РћСЃС‚Р°РЅРѕРІРёРј С‚Р°Р№РјРµСЂ
 			NRF_HAL_STOP_TIMEOUT(NRF_TIMER_DELAY);
 		}
 	}
 	else
-	//Ждём завершения приёма данных
+	//Р–РґС‘Рј Р·Р°РІРµСЂС€РµРЅРёСЏ РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 	if(nrf_machine_state == NRF_MACHINE_STATE_WAIT_RECEIVE)
 	{
-		//Проверяем статус прерывания
-		//Если было прерывание, то читаем статус и из него смотри, что за прерывание
-		//Либо ждём истечения таймаута
+		//РџСЂРѕРІРµСЂСЏРµРј СЃС‚Р°С‚СѓСЃ РїСЂРµСЂС‹РІР°РЅРёСЏ
+		//Р•СЃР»Рё Р±С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёРµ, С‚Рѕ С‡РёС‚Р°РµРј СЃС‚Р°С‚СѓСЃ Рё РёР· РЅРµРіРѕ СЃРјРѕС‚СЂРё, С‡С‚Рѕ Р·Р° РїСЂРµСЂС‹РІР°РЅРёРµ
+		//Р›РёР±Рѕ Р¶РґС‘Рј РёСЃС‚РµС‡РµРЅРёСЏ С‚Р°Р№РјР°СѓС‚Р°
 
-		//Запрос состояния прерывания
+		//Р—Р°РїСЂРѕСЃ СЃРѕСЃС‚РѕСЏРЅРёСЏ РїСЂРµСЂС‹РІР°РЅРёСЏ
 		NRF_HAL_GET_IRQ_STATE(&irq_state);
 
-		//Смотрим было ли прерывание
+		//РЎРјРѕС‚СЂРёРј Р±С‹Р»Рѕ Р»Рё РїСЂРµСЂС‹РІР°РЅРёРµ
 		if(irq_state == NRF_STATE_ON)
 		{
-			//Было прерывание, нужно прочесть регистр статуса, достаточно команды NOP
+			//Р‘С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёРµ, РЅСѓР¶РЅРѕ РїСЂРѕС‡РµСЃС‚СЊ СЂРµРіРёСЃС‚СЂ СЃС‚Р°С‚СѓСЃР°, РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РєРѕРјР°РЅРґС‹ NOP
 			NRF_NOP();
 
-			//Смотрим биты прерывания в регистре статуса
+			//РЎРјРѕС‚СЂРёРј Р±РёС‚С‹ РїСЂРµСЂС‹РІР°РЅРёСЏ РІ СЂРµРіРёСЃС‚СЂРµ СЃС‚Р°С‚СѓСЃР°
 
-			//Бит прерывания приёма данных
+			//Р‘РёС‚ РїСЂРµСЂС‹РІР°РЅРёСЏ РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 			if(nrf_status_register & NRF_REGISTER_STATUS_RX_DR_BIT)
 			{
-				//Успешно приняли данные
+				//РЈСЃРїРµС€РЅРѕ РїСЂРёРЅСЏР»Рё РґР°РЅРЅС‹Рµ
 
-				//Читаем длину данных в приёмном FIFO
+				//Р§РёС‚Р°РµРј РґР»РёРЅСѓ РґР°РЅРЅС‹С… РІ РїСЂРёС‘РјРЅРѕРј FIFO
 				NRF_READ_RX_PAYLOAD_WIDTH(&nrf_receive_data_size);
 
-				//Вычитываем данные
+				//Р’С‹С‡РёС‚С‹РІР°РµРј РґР°РЅРЅС‹Рµ
 				NRF_READ_RX_PAYLOAD(nrf_receive_data_size, nrf_receive_data);
 
-				//Пауза перед сбросом RX FIFO, что бы отправился ACK, см. команду FLUSH RX в документации
+				//РџР°СѓР·Р° РїРµСЂРµРґ СЃР±СЂРѕСЃРѕРј RX FIFO, С‡С‚Рѕ Р±С‹ РѕС‚РїСЂР°РІРёР»СЃСЏ ACK, СЃРј. РєРѕРјР°РЅРґСѓ FLUSH RX РІ РґРѕРєСѓРјРµРЅС‚Р°С†РёРё
 				NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_ACK_TRANSMIT);
 
-				//Остановка приёма данных
+				//РћСЃС‚Р°РЅРѕРІРєР° РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 				NRF_STOP_PROCESSING();
 
-				//Выставим статус завершения приёма
+				//Р’С‹СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ Р·Р°РІРµСЂС€РµРЅРёСЏ РїСЂРёС‘РјР°
 				status = NRF_ERROR_CODE_RECEIVE_DATA_SUCCESS;
 			}
 		}
 		else
 		{
-			//Не было прерывания, проверим таймаут
+			//РќРµ Р±С‹Р»Рѕ РїСЂРµСЂС‹РІР°РЅРёСЏ, РїСЂРѕРІРµСЂРёРј С‚Р°Р№РјР°СѓС‚
 			if(NRF_HAL_STATUS_TIMEOUT(NRF_TIMER_TIMEOUT) == NRF_ERROR_CODE_TIMEOUT)
 			{
-				//Таймаут истёк
+				//РўР°Р№РјР°СѓС‚ РёСЃС‚С‘Рє
 
-				//Остановка приёма или передачи данных
+				//РћСЃС‚Р°РЅРѕРІРєР° РїСЂРёС‘РјР° РёР»Рё РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…
 				NRF_STOP_PROCESSING();
 
-				//Выставим статус таймаута
+				//Р’С‹СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ С‚Р°Р№РјР°СѓС‚Р°
 				status = NRF_ERROR_CODE_TIMEOUT;
 			}
 		}
@@ -1108,44 +1108,44 @@ uint8_t NRF_EXCHANGE_PROCESSING(void)
 	return status;
 }
 
-//Остановка передачи или приёма данных
+//РћСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРґР°С‡Рё РёР»Рё РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 uint8_t NRF_STOP_PROCESSING(void)
 {
-	//Выключаем всё
+	//Р’С‹РєР»СЋС‡Р°РµРј РІСЃС‘
 
 	uint8_t status = NRF_ERROR_CODE_SUCCESS;
 	uint8_t reg_value;
 	uint8_t irq_state = NRF_STATE_OFF;
 
-	//Выставляем сигнал CE в 0
+	//Р’С‹СЃС‚Р°РІР»СЏРµРј СЃРёРіРЅР°Р» CE РІ 0
 	NRF_HAL_SET_CE_PIN_STATE(NRF_CE_STATE_OFF);
 
-	//Пауза
+	//РџР°СѓР·Р°
 	NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_STOP_PAUSE);
 
-	//Остановим таймер
+	//РћСЃС‚Р°РЅРѕРІРёРј С‚Р°Р№РјРµСЂ
 	NRF_HAL_STOP_TIMEOUT(NRF_TIMER_TIMEOUT);
 
-	//Сброс регистра статусов
+	//РЎР±СЂРѕСЃ СЂРµРіРёСЃС‚СЂР° СЃС‚Р°С‚СѓСЃРѕРІ
 	reg_value = NRF_REGISTER_STATUS_RX_DR_BIT | NRF_REGISTER_STATUS_TX_DS_BIT | NRF_REGISTER_STATUS_MAX_RT_BIT;
 	status = NRF_WRITE_REGISTER(NRF_REGISTER_STATUS, 0x01, &reg_value);
 
-	//Запрос состояния прерывания - для сброса
+	//Р—Р°РїСЂРѕСЃ СЃРѕСЃС‚РѕСЏРЅРёСЏ РїСЂРµСЂС‹РІР°РЅРёСЏ - РґР»СЏ СЃР±СЂРѕСЃР°
 	NRF_HAL_GET_IRQ_STATE(&irq_state);
 
-	//Выключим приёмопередатчик, PWR_UP = 0, PRIM_RX = 0
+	//Р’С‹РєР»СЋС‡РёРј РїСЂРёС‘РјРѕРїРµСЂРµРґР°С‚С‡РёРє, PWR_UP = 0, PRIM_RX = 0
 	nrf_config &= ~NRF_REGISTER_CONFIG_PWR_UP;
 	nrf_config &= ~NRF_REGISTER_CONFIG_PRIM_RX;
 	status = NRF_WRITE_REGISTER(NRF_REGISTER_CONFIG, 0x01, &nrf_config);
 
-	//Сброс FIFO на передачу и приём
+	//РЎР±СЂРѕСЃ FIFO РЅР° РїРµСЂРµРґР°С‡Сѓ Рё РїСЂРёС‘Рј
 	status = NRF_FLUSH_TX();
 	status = NRF_FLUSH_RX();
 
-	//Сброс автомата состояний
+	//РЎР±СЂРѕСЃ Р°РІС‚РѕРјР°С‚Р° СЃРѕСЃС‚РѕСЏРЅРёР№
 	nrf_machine_state = NRF_MACHINE_STATE_FREE;
 
-	//Пауза
+	//РџР°СѓР·Р°
 	NRF_HAL_MICRO_SECOND_DELAY(NRF_TIME_CE_STOP_PAUSE);
 
 	return status;

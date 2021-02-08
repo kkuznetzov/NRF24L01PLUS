@@ -1,7 +1,7 @@
 /*
  * NRF24L01PLUS.h
  *
- *  Created on: 23 янв. 2021 г.
+ *  Created on: 23 СЏРЅРІ. 2021 Рі.
  *      Author: K.Kuznetzov
  */
 
@@ -10,33 +10,33 @@
 
 #include "NRF24L01PLUS_DEFINES.h"
 
-uint8_t NRF_INIT(uint8_t size_address);//Инициализация NRF24L01PLUS
-uint8_t NRF_READ_REGISTER(uint8_t address, uint8_t size, uint8_t *value);//Чтение регистра
-uint8_t NRF_WRITE_REGISTER(uint8_t address, uint8_t size, uint8_t *value);//Запись регистра
-uint8_t NRF_READ_RX_PAYLOAD(uint8_t size, uint8_t *data);//Чтение принятых данных
-uint8_t NRF_WRITE_TX_PAYLOAD(uint8_t size, uint8_t *data);//Запись данных на передачу
-uint8_t NRF_FLUSH_TX(void);//Отчистка TX FIFO
-uint8_t NRF_FLUSH_RX(void);//Отчистка RX FIFO
-uint8_t NRF_REUSE_TX_PAYLOAD(void);//Повторное использование последних переданных данных
-uint8_t NRF_READ_RX_PAYLOAD_WIDTH(uint8_t *width);//Чтение размера данных на верху FIFO
-uint8_t NRF_WRITE_ACK_PAYLOAD(uint8_t pipe, uint8_t size, uint8_t *data);//Запись данных для ответа ACK
-uint8_t NRF_WRITE_TX_PAYLOAD_NO_ACK(uint8_t size, uint8_t *data);//Запись данных на передачу без подтверждения
-uint8_t NRF_NOP(void);//Команда NOP
-uint8_t NRF_WRITE_RX_ADDRESS(uint8_t pipe, uint8_t *addr, uint8_t size);//Запись адреса на приём
-uint8_t NRF_WRITE_TX_ADDRESS(uint8_t *addr, uint8_t size);//Запись адреса на передачу
-uint8_t NRF_SET_CHANNEL(uint8_t channel);//Задание радиоканала, 0 - 125
-uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc);//Задание параметров повторной передачи пакетов
-uint8_t NRF_SET_CRC_SIZE(uint8_t size);//Задать размер CRC, 1/2
-uint8_t NRF_SET_POWER(uint8_t power);//Задать мощность передачтчика
-uint8_t NRF_SET_BAUDRATE(uint8_t baudrate);//Задать скорость обмена
-uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length);//Задать размер данных на приём для заданного PIPE, от 0 (не используется) до 32, для режима Static Length
-uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload);//Настройка PIPE, разрешить приём, разрешить ответ, разрешить динамическую длину ответа, данные в ответе
+uint8_t NRF_INIT(uint8_t size_address);//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ NRF24L01PLUS
+uint8_t NRF_READ_REGISTER(uint8_t address, uint8_t size, uint8_t *value);//Р§С‚РµРЅРёРµ СЂРµРіРёСЃС‚СЂР°
+uint8_t NRF_WRITE_REGISTER(uint8_t address, uint8_t size, uint8_t *value);//Р—Р°РїРёСЃСЊ СЂРµРіРёСЃС‚СЂР°
+uint8_t NRF_READ_RX_PAYLOAD(uint8_t size, uint8_t *data);//Р§С‚РµРЅРёРµ РїСЂРёРЅСЏС‚С‹С… РґР°РЅРЅС‹С…
+uint8_t NRF_WRITE_TX_PAYLOAD(uint8_t size, uint8_t *data);//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РЅР° РїРµСЂРµРґР°С‡Сѓ
+uint8_t NRF_FLUSH_TX(void);//РћС‚С‡РёСЃС‚РєР° TX FIFO
+uint8_t NRF_FLUSH_RX(void);//РћС‚С‡РёСЃС‚РєР° RX FIFO
+uint8_t NRF_REUSE_TX_PAYLOAD(void);//РџРѕРІС‚РѕСЂРЅРѕРµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РїРѕСЃР»РµРґРЅРёС… РїРµСЂРµРґР°РЅРЅС‹С… РґР°РЅРЅС‹С…
+uint8_t NRF_READ_RX_PAYLOAD_WIDTH(uint8_t *width);//Р§С‚РµРЅРёРµ СЂР°Р·РјРµСЂР° РґР°РЅРЅС‹С… РЅР° РІРµСЂС…Сѓ FIFO
+uint8_t NRF_WRITE_ACK_PAYLOAD(uint8_t pipe, uint8_t size, uint8_t *data);//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РґР»СЏ РѕС‚РІРµС‚Р° ACK
+uint8_t NRF_WRITE_TX_PAYLOAD_NO_ACK(uint8_t size, uint8_t *data);//Р—Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РЅР° РїРµСЂРµРґР°С‡Сѓ Р±РµР· РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
+uint8_t NRF_NOP(void);//РљРѕРјР°РЅРґР° NOP
+uint8_t NRF_WRITE_RX_ADDRESS(uint8_t pipe, uint8_t *addr, uint8_t size);//Р—Р°РїРёСЃСЊ Р°РґСЂРµСЃР° РЅР° РїСЂРёС‘Рј
+uint8_t NRF_WRITE_TX_ADDRESS(uint8_t *addr, uint8_t size);//Р—Р°РїРёСЃСЊ Р°РґСЂРµСЃР° РЅР° РїРµСЂРµРґР°С‡Сѓ
+uint8_t NRF_SET_CHANNEL(uint8_t channel);//Р—Р°РґР°РЅРёРµ СЂР°РґРёРѕРєР°РЅР°Р»Р°, 0 - 125
+uint8_t NRF_SET_RETRANSMIT(uint8_t ard, uint8_t arc);//Р—Р°РґР°РЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РїРѕРІС‚РѕСЂРЅРѕР№ РїРµСЂРµРґР°С‡Рё РїР°РєРµС‚РѕРІ
+uint8_t NRF_SET_CRC_SIZE(uint8_t size);//Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ CRC, 1/2
+uint8_t NRF_SET_POWER(uint8_t power);//Р—Р°РґР°С‚СЊ РјРѕС‰РЅРѕСЃС‚СЊ РїРµСЂРµРґР°С‡С‚С‡РёРєР°
+uint8_t NRF_SET_BAUDRATE(uint8_t baudrate);//Р—Р°РґР°С‚СЊ СЃРєРѕСЂРѕСЃС‚СЊ РѕР±РјРµРЅР°
+uint8_t NRF_SET_RX_PAYLOAD_LENGTH(uint8_t pipe, uint8_t length);//Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ РґР°РЅРЅС‹С… РЅР° РїСЂРёС‘Рј РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ PIPE, РѕС‚ 0 (РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ) РґРѕ 32, РґР»СЏ СЂРµР¶РёРјР° Static Length
+uint8_t NRF_SET_PIPE(uint8_t pipe, uint8_t en_pipe, uint8_t en_ack, uint8_t en_dpl, uint8_t en_ack_payload);//РќР°СЃС‚СЂРѕР№РєР° PIPE, СЂР°Р·СЂРµС€РёС‚СЊ РїСЂРёС‘Рј, СЂР°Р·СЂРµС€РёС‚СЊ РѕС‚РІРµС‚, СЂР°Р·СЂРµС€РёС‚СЊ РґРёРЅР°РјРёС‡РµСЃРєСѓСЋ РґР»РёРЅСѓ РѕС‚РІРµС‚Р°, РґР°РЅРЅС‹Рµ РІ РѕС‚РІРµС‚Рµ
 
-uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag);//Запуск передачи пакета
-uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_t timeout);//Запуск приёма пакета
-uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_size);//Получить принятые данные
-uint8_t NRF_EXCHANGE_PROCESSING(void);//Обработка приёма и передачи
-uint8_t NRF_STOP_PROCESSING(void);//Остановка передачи или приёма данных
+uint8_t NRF_START_TRANSMIT(uint8_t *data, uint8_t size, uint32_t timeout, uint8_t no_ack_flag);//Р—Р°РїСѓСЃРє РїРµСЂРµРґР°С‡Рё РїР°РєРµС‚Р°
+uint8_t NRF_START_RECEIVE(uint8_t ack_pipe, uint8_t *data, uint8_t size, uint32_t timeout);//Р—Р°РїСѓСЃРє РїСЂРёС‘РјР° РїР°РєРµС‚Р°
+uint8_t NRF_GET_RECEIVED_DATA(uint8_t *data, uint8_t buffer_size, uint8_t *data_size);//РџРѕР»СѓС‡РёС‚СЊ РїСЂРёРЅСЏС‚С‹Рµ РґР°РЅРЅС‹Рµ
+uint8_t NRF_EXCHANGE_PROCESSING(void);//РћР±СЂР°Р±РѕС‚РєР° РїСЂРёС‘РјР° Рё РїРµСЂРµРґР°С‡Рё
+uint8_t NRF_STOP_PROCESSING(void);//РћСЃС‚Р°РЅРѕРІРєР° РїРµСЂРµРґР°С‡Рё РёР»Рё РїСЂРёС‘РјР° РґР°РЅРЅС‹С…
 
-//-таймаут на передачу и на прём?
+//-С‚Р°Р№РјР°СѓС‚ РЅР° РїРµСЂРµРґР°С‡Сѓ Рё РЅР° РїСЂС‘Рј?
 #endif /* NRF24L01PLUS_H_ */
